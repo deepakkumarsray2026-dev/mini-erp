@@ -1,0 +1,52 @@
+# Environment
+.env
+.env.dev
+.env.prod
+.env.local
+*.key
+*-key.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/build/
+
+# ML artifacts
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+backend/models_store/*
+!backend/models_store/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# MLflow
+mlflow/mlruns/*
+!mlflow/mlruns/.gitkeep
+mlflow/artifacts/*
+!mlflow/artifacts/.gitkeep
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+logs/
