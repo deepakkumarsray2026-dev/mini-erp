@@ -10,6 +10,8 @@ from app.core.database import check_db_connection
 from app.core.logging import setup_logging
 from app.core.middleware import request_middleware
 from app.api.v1 import auth
+from app.api.v1 import workforce, payroll, accounts_payable
+from app.api.v1 import expenses, procurement, general_ledger, admin
 
 
 @asynccontextmanager
@@ -56,16 +58,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # ── Routers ───────────────────────────────────────────────────────────────────
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
-
-# Uncomment as each module is built:
-# from app.api.v1 import workforce, payroll, accounts_payable
-# from app.api.v1 import expenses, procurement, general_ledger, admin
-# app.include_router(workforce.router,        prefix="/api/v1/workforce",   tags=["Workforce"])
-# app.include_router(payroll.router,          prefix="/api/v1/payroll",     tags=["Payroll"])
-# app.include_router(accounts_payable.router, prefix="/api/v1/ap",          tags=["AP"])
-# app.include_router(expenses.router,         prefix="/api/v1/expenses",    tags=["Expenses"])
-# app.include_router(procurement.router,      prefix="/api/v1/procurement", tags=["Procurement"])
+app.include_router(auth.router,             prefix="/api/v1/auth",        tags=["Auth"])
+app.include_router(workforce.router,        prefix="/api/v1/workforce",   tags=["Workforce"])
+app.include_router(payroll.router,          prefix="/api/v1/payroll",     tags=["Payroll"])
+app.include_router(accounts_payable.router, prefix="/api/v1/ap",          tags=["Accounts Payable"])
+app.include_router(expenses.router,         prefix="/api/v1/expenses",    tags=["Expenses"])
+app.include_router(procurement.router,      prefix="/api/v1/procurement", tags=["Procurement"])
+app.include_router(general_ledger.router,   prefix="/api/v1/gl",          tags=["General Ledger"])
+app.include_router(admin.router,            prefix="/api/v1/admin",       tags=["Admin"])
 # app.include_router(general_ledger.router,   prefix="/api/v1/gl",          tags=["GL"])
 # app.include_router(admin.router,            prefix="/api/v1/admin",       tags=["Admin"])
 
