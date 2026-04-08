@@ -143,3 +143,15 @@ def can_run(module: ModuleName):
 
 def can_export(module: ModuleName):
     return require_permission(module, Action.EXPORT)
+
+def require_role(role_code: str):
+    """Require a specific role code (e.g. 'admin', 'hr_manager')."""
+    async def checker(current_user=Depends(get_current_user)):
+        for user_role in current_user.user_roles:
+            if user_role.is_active and user_role.role.code == role_code:
+                return current_user
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Role '{role_code}' required",
+        )
+    return checker

@@ -1,11 +1,11 @@
 from collections.abc import AsyncGenerator
-from sqlalchemy import MetaData, text
+from sqlalchemy import MetaData, text, create_engine
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from app.core.config import settings
 
 NAMING_CONVENTION = {
@@ -58,3 +58,19 @@ async def check_db_connection() -> bool:
         return True
     except Exception:
         return False
+
+
+# ── Sync engine for ML training (blocking I/O acceptable in background tasks) ─
+sync_engine = create_engine(
+    settings.DATABASE_URL_SYNC,
+    pool_size=5,
+    max_overflow=10,
+    pool_pre_ping=True,
+)
+
+SyncSessionLocal = sessionmaker(
+    bind=sync_engine,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+)
