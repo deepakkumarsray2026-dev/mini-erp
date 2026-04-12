@@ -201,7 +201,8 @@ async def run(db: AsyncSession) -> dict:
         is_terminated = random.random() < 0.15
         term_date = None
         if is_terminated:
-            term_date = hire_date + timedelta(days=random.randint(90, int(years * 365)))
+            term_days_max = max(91, int(years * 365))
+            term_date = hire_date + timedelta(days=random.randint(90, term_days_max))
             if term_date > date.today():
                 term_date = date.today() - timedelta(days=30)
 

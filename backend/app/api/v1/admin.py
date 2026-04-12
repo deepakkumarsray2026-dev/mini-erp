@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.permissions import require_permission, ModuleName, Action
-from app.models.auth import Role, Permission, UserRole
+from app.models.auth import Role, UserRole
 from app.models.hcm import Employee
 from app.models.payroll import PaySlip
 from app.models.ap import Invoice

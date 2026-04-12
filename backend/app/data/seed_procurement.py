@@ -103,6 +103,7 @@ async def seed_procurement(session: AsyncSession) -> None:
             terms             = f"Net {vendor.payment_terms_days}",
         )
         session.add(po)
+        await session.flush()  # ensure po.id is populated before using it
         po_list.append((po, status))
 
         # Add a PO line
