@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: mini_erp_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mini_erp
+      POSTGRES_USER: erp_user
+      POSTGRES_PASSWORD: changeme_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erp_user -d mini_erp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: mini_erp_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: mini_erp_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.dev
+    volumes:
+      - ./backend:/app
+      - ./models:/app/models_store
+      - ./uploads:/app/uploads
+      - ./logs:/opt/mini-erp/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: mini_erp_celery
+    restart: unless-stopped
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=2
+    env_file:
+      - ./backend/.env.dev
+    volumes:
+      - ./backend:/app
+      - ./models:/app/models_store
+      - ./uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
