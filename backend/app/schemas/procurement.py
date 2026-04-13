@@ -21,6 +21,7 @@ class PRResponse(BaseModel):
     id: str
     pr_number: str
     requested_by: str
+    requester_name: str | None = None
     department_id: str
     title: str
     justification: str | None = None
@@ -74,6 +75,7 @@ class POResponse(BaseModel):
     po_number: str
     requisition_id: str | None = None
     vendor_id: str
+    vendor_name: str | None = None
     issued_date: date
     expected_delivery: date | None = None
     total_amount: Decimal

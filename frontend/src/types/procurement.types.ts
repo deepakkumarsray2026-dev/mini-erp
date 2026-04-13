@@ -1,6 +1,6 @@
 export interface Requisition {
   id: string
-  requisition_number: string
+  pr_number: string
   requester_id: string
   requester_name: string | null
   title: string
@@ -17,8 +17,8 @@ export interface PurchaseOrder {
   vendor_id: string
   vendor_name: string | null
   requisition_id: string | null
-  order_date: string
-  expected_delivery_date: string | null
+  issued_date: string
+  expected_delivery: string | null
   total_amount: number
   status: 'draft' | 'sent' | 'acknowledged' | 'partially_received' | 'received' | 'cancelled'
   created_at: string

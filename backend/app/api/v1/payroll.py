@@ -40,14 +40,32 @@ async def create_pay_group(
 
 # ── Pay Periods ───────────────────────────────────────────────────────────────
 
-@router.get("/pay-periods", response_model=list[PayPeriodResponse])
+@router.get("/pay-periods", response_model=PaginatedResponse[PayPeriodResponse])
 async def list_pay_periods(
     pay_group_id: str | None = None,
     fiscal_year: int | None = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     _=Depends(can_read(ModuleName.PAYROLL)),
     db: AsyncSession = Depends(get_db),
 ):
-    return await payroll_service.list_pay_periods(db, pay_group_id, fiscal_year)
+    periods, total = await payroll_service.list_pay_periods(db, pay_group_id, fiscal_year, page, page_size)
+    items = [
+        {
+            "id":            p.id,
+            "pay_group_id":  p.pay_group_id,
+            "period_name":   f"FY{p.fiscal_year}-P{p.period_number:02d}",
+            "pay_group_name": p.pay_group.name if p.pay_group else None,
+            "period_number": p.period_number,
+            "fiscal_year":   p.fiscal_year,
+            "start_date":    p.start_date,
+            "end_date":      p.end_date,
+            "pay_date":      p.pay_date,
+            "status":        p.status,
+        }
+        for p in periods
+    ]
+    return paginate(items, total, page, page_size)
 
 
 @router.get("/pay-periods/{period_id}", response_model=PayPeriodResponse)
@@ -99,14 +117,41 @@ async def confirm_payroll_run(
 
 # ── Payslips ──────────────────────────────────────────────────────────────────
 
-@router.get("/payslips", response_model=list[PaySlipResponse])
+@router.get("/payslips", response_model=PaginatedResponse[PaySlipResponse])
 async def list_payslips(
     payroll_run_id: str | None = None,
     employee_id: str | None = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     _=Depends(can_read(ModuleName.PAYROLL)),
     db: AsyncSession = Depends(get_db),
 ):
-    return await payroll_service.list_payslips(db, payroll_run_id, employee_id)
+    slips, total = await payroll_service.list_payslips(db, payroll_run_id, employee_id, page, page_size)
+    items = []
+    for s in slips:
+        emp = s.employee
+        run = s.payroll_run
+        period = run.pay_period if run else None
+        items.append({
+            "id":               s.id,
+            "payroll_run_id":   s.payroll_run_id,
+            "employee_id":      s.employee_id,
+            "employee_name":    f"{emp.first_name} {emp.last_name}" if emp else None,
+            "period_name":      f"FY{period.fiscal_year}-P{period.period_number:02d}" if period else None,
+            "status":           run.status if run else None,
+            "gross_pay":        s.gross_pay,
+            "total_deductions": s.total_deductions,
+            "net_pay":          s.net_pay,
+            "income_tax":       s.income_tax,
+            "employee_ni":      s.employee_ni,
+            "employee_pension": s.employee_pension,
+            "employer_ni":      s.employer_ni,
+            "employer_pension": s.employer_pension,
+            "line_items":       s.line_items,
+            "is_anomalous":     s.is_anomalous,
+            "anomaly_reason":   s.anomaly_reason,
+        })
+    return paginate(items, total, page, page_size)
 
 
 @router.get("/payslips/{payslip_id}", response_model=PaySlipResponse)

@@ -52,7 +52,24 @@ async def list_reports(
     db: AsyncSession = Depends(get_db),
 ):
     reports, total = await expense_service.list_reports(db, employee_id, status, page, page_size)
-    return paginate(reports, total, page, page_size)
+    items = [
+        {
+            "id":            r.id,
+            "report_number": r.report_number,
+            "employee_id":   r.employee_id,
+            "employee_name": f"{r.employee.first_name} {r.employee.last_name}" if r.employee else None,
+            "title":         r.title,
+            "period_start":  r.period_start,
+            "period_end":    r.period_end,
+            "total_amount":  r.total_amount,
+            "currency":      r.currency,
+            "status":        r.status,
+            "is_flagged":    r.is_flagged,
+            "created_at":    r.created_at,
+        }
+        for r in reports
+    ]
+    return paginate(items, total, page, page_size)
 
 
 @router.post("/reports", response_model=ExpenseReportResponse, status_code=201)

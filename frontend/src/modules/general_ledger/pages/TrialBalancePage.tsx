@@ -18,8 +18,8 @@ export default function TrialBalancePage() {
     queryFn: () => glService.getTrialBalance(),
   })
 
-  const totalDebits = data?.reduce((s, r) => s + r.debit_balance, 0) ?? 0
-  const totalCredits = data?.reduce((s, r) => s + r.credit_balance, 0) ?? 0
+  const totalDebits = data?.reduce((s, r) => s + Number(r.total_debit), 0) ?? 0
+  const totalCredits = data?.reduce((s, r) => s + Number(r.total_credit), 0) ?? 0
   const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01
 
   return (
@@ -52,16 +52,16 @@ export default function TrialBalancePage() {
             <tbody className="divide-y divide-gray-100">
               {(data ?? []).map((row, i) => (
                 <tr key={i} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm font-mono text-xs text-gray-600">{row.account_number}</td>
+                  <td className="px-4 py-3 text-sm font-mono text-xs text-gray-600">{row.account_code}</td>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">{row.account_name}</td>
                   <td className="px-4 py-3 text-sm">
                     <Badge variant={typeColors[row.account_type] ?? 'gray'}>{row.account_type}</Badge>
                   </td>
                   <td className="px-4 py-3 text-sm font-mono text-right">
-                    {row.debit_balance > 0 ? fmt(row.debit_balance) : '—'}
+                    {Number(row.total_debit) > 0 ? fmt(Number(row.total_debit)) : '—'}
                   </td>
                   <td className="px-4 py-3 text-sm font-mono text-right">
-                    {row.credit_balance > 0 ? fmt(row.credit_balance) : '—'}
+                    {Number(row.total_credit) > 0 ? fmt(Number(row.total_credit)) : '—'}
                   </td>
                 </tr>
               ))}

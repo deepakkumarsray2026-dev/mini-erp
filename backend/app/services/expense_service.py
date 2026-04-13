@@ -49,7 +49,8 @@ async def list_reports(
     total_result = await db.execute(select(func.count()).select_from(q.subquery()))
     total = total_result.scalar()
     result = await db.execute(
-        q.order_by(ExpenseReport.created_at.desc())
+        q.options(selectinload(ExpenseReport.employee))
+         .order_by(ExpenseReport.created_at.desc())
          .offset((page - 1) * page_size).limit(page_size)
     )
     return result.scalars().all(), total

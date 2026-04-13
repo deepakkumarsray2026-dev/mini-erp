@@ -28,6 +28,7 @@ class PurchaseRequisition(Base, TimestampMixin):
     approved_by:   Mapped[str|None]     = mapped_column(UUID(as_uuid=False))
 
     purchase_orders: Mapped[list["PurchaseOrder"]] = relationship("PurchaseOrder", back_populates="requisition")
+    requester: Mapped["Employee"] = relationship("Employee", foreign_keys=[requested_by], primaryjoin="PurchaseRequisition.requested_by == Employee.id")
 
 
 class PurchaseOrder(Base, TimestampMixin):
@@ -47,6 +48,7 @@ class PurchaseOrder(Base, TimestampMixin):
     approved_by:       Mapped[str|None]     = mapped_column(UUID(as_uuid=False))
 
     requisition: Mapped[PurchaseRequisition|None] = relationship("PurchaseRequisition", back_populates="purchase_orders")
+    vendor: Mapped["Vendor"] = relationship("Vendor", foreign_keys=[vendor_id], primaryjoin="PurchaseOrder.vendor_id == Vendor.id")
     lines:       Mapped[list["POLine"]]           = relationship("POLine", back_populates="purchase_order", cascade="all, delete-orphan")
     receipts:    Mapped[list["GoodsReceipt"]]     = relationship("GoodsReceipt", back_populates="purchase_order")
 

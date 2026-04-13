@@ -1,11 +1,11 @@
 export interface Vendor {
   id: string
+  vendor_id: string
   name: string
-  code: string
   email: string | null
   phone: string | null
   tax_id: string | null
-  payment_terms: number
+  payment_terms_days: number
   is_active: boolean
   created_at: string
 }

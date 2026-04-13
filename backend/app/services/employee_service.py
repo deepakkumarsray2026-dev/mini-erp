@@ -18,12 +18,13 @@ from app.schemas.workforce import (
 
 # ── Departments ───────────────────────────────────────────────────────────────
 
-async def list_departments(db: AsyncSession, active_only: bool = True) -> list[Department]:
+async def list_departments(db: AsyncSession, active_only: bool = True, page: int = 1, page_size: int = 50) -> tuple[list[Department], int]:
     q = select(Department)
     if active_only:
         q = q.where(Department.is_active == True)
-    result = await db.execute(q.order_by(Department.name))
-    return result.scalars().all()
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar()
+    result = await db.execute(q.order_by(Department.name).offset((page - 1) * page_size).limit(page_size))
+    return result.scalars().all(), total
 
 
 async def get_department(db: AsyncSession, dept_id: str) -> Department:
@@ -145,8 +146,11 @@ async def list_employees(
         ))
     total_result = await db.execute(select(func.count()).select_from(q.subquery()))
     total = total_result.scalar()
-    result = await db.execute(q.order_by(Employee.last_name, Employee.first_name)
-                               .offset((page - 1) * page_size).limit(page_size))
+    result = await db.execute(
+        q.options(selectinload(Employee.department), selectinload(Employee.job))
+         .order_by(Employee.last_name, Employee.first_name)
+         .offset((page - 1) * page_size).limit(page_size)
+    )
     return result.scalars().all(), total
 
 

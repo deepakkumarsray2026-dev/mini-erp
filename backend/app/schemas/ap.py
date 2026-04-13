@@ -84,6 +84,7 @@ class InvoiceResponse(BaseModel):
     id: str
     invoice_number: str
     vendor_id: str
+    vendor_name: str | None = None
     po_id: str | None = None
     invoice_date: date
     due_date: date
@@ -91,6 +92,7 @@ class InvoiceResponse(BaseModel):
     subtotal: Decimal
     tax_amount: Decimal
     total_amount: Decimal
+    paid_amount: Decimal | None = None
     status: str
     description: str | None = None
     category: str | None = None

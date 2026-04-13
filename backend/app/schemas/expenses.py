@@ -82,6 +82,7 @@ class ExpenseReportListResponse(BaseModel):
     id: str
     report_number: str
     employee_id: str
+    employee_name: str | None = None
     title: str
     period_start: date
     period_end: date

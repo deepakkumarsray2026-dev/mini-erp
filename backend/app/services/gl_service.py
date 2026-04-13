@@ -20,14 +20,15 @@ from app.schemas.gl import (
 
 # ── Chart of Accounts ─────────────────────────────────────────────────────────
 
-async def list_accounts(db: AsyncSession, account_type: str | None = None, active_only: bool = True) -> list[ChartOfAccounts]:
+async def list_accounts(db: AsyncSession, account_type: str | None = None, active_only: bool = True, page: int = 1, page_size: int = 50) -> tuple[list[ChartOfAccounts], int]:
     q = select(ChartOfAccounts)
     if active_only:
         q = q.where(ChartOfAccounts.is_active == True)
     if account_type:
         q = q.where(ChartOfAccounts.account_type == account_type)
-    result = await db.execute(q.order_by(ChartOfAccounts.account_code))
-    return result.scalars().all()
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar()
+    result = await db.execute(q.order_by(ChartOfAccounts.account_code).offset((page - 1) * page_size).limit(page_size))
+    return result.scalars().all(), total
 
 
 async def get_account(db: AsyncSession, account_code: str) -> ChartOfAccounts:
@@ -123,7 +124,8 @@ async def list_journals(
         q = q.where(Journal.status == status)
     total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar()
     result = await db.execute(
-        q.order_by(Journal.journal_date.desc(), Journal.created_at.desc())
+        q.options(selectinload(Journal.lines))
+         .order_by(Journal.journal_date.desc(), Journal.created_at.desc())
          .offset((page - 1) * page_size).limit(page_size)
     )
     return result.scalars().all(), total

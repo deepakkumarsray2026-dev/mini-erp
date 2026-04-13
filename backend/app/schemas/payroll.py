@@ -23,6 +23,8 @@ class PayGroupResponse(PayGroupCreate):
 class PayPeriodResponse(BaseModel):
     id: str
     pay_group_id: str
+    period_name: str | None = None
+    pay_group_name: str | None = None
     period_number: int
     fiscal_year: int
     start_date: date
@@ -58,6 +60,9 @@ class PaySlipResponse(BaseModel):
     id: str
     payroll_run_id: str
     employee_id: str
+    employee_name: str | None = None
+    period_name: str | None = None
+    status: str | None = None
     gross_pay: Decimal
     total_deductions: Decimal
     net_pay: Decimal
