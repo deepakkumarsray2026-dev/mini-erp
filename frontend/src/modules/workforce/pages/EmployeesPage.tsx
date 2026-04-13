@@ -20,6 +20,7 @@ type FormData = {
   job_id: string
   hire_date: string
   employment_type: string
+  base_salary: string
 }
 
 function EmployeeForm({
@@ -77,6 +78,19 @@ function EmployeeForm({
           </select>
         </Field>
       </div>
+      <Field label="Base Salary (GBP)" required error={errors.base_salary?.message}>
+        <input
+          {...register('base_salary', {
+            required: 'Required',
+            min: { value: 0, message: 'Must be positive' },
+          })}
+          type="number"
+          min="0"
+          step="0.01"
+          className={inputCls}
+          placeholder="e.g. 50000"
+        />
+      </Field>
       <FormActions onCancel={onCancel} loading={loading} />
     </form>
   )
@@ -155,13 +169,23 @@ export default function EmployeesPage() {
   })
 
   const createMut = useMutation({
-    mutationFn: (d: FormData) => workforceService.createEmployee(d),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); setModal({ open: false, emp: null, mode: 'create' }) },
+    mutationFn: (d: FormData) => workforceService.createEmployee({ ...d, base_salary: Number(d.base_salary) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
+      setModal({ open: false, emp: null, mode: 'create' })
+      notify.success('Employee created successfully')
+    },
+    onError: (err) => notify.error(getErrorMessage(err)),
   })
 
   const updateMut = useMutation({
     mutationFn: ({ id, d }: { id: string; d: UpdateData }) => workforceService.updateEmployee(id, d),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['employees'] }); setModal({ open: false, emp: null, mode: 'create' }) },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
+      setModal({ open: false, emp: null, mode: 'create' })
+      notify.success('Employee updated successfully')
+    },
+    onError: (err) => notify.error(getErrorMessage(err)),
   })
 
   const handleSearch = (v: string) => {
