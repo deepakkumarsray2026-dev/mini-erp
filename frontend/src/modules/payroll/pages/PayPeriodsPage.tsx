@@ -10,9 +10,9 @@ import { format } from 'date-fns'
 const columns: Column<PayPeriod>[] = [
   { key: 'period_name', header: 'Period', render: (r) => <span className="font-medium">{r.period_name}</span> },
   { key: 'pay_group_name', header: 'Pay Group', render: (r) => r.pay_group_name ?? '—' },
-  { key: 'start_date', header: 'Start', render: (r) => format(new Date(r.start_date), 'MMM d, yyyy') },
-  { key: 'end_date', header: 'End', render: (r) => format(new Date(r.end_date), 'MMM d, yyyy') },
-  { key: 'pay_date', header: 'Pay Date', render: (r) => format(new Date(r.pay_date), 'MMM d, yyyy') },
+  { key: 'start_date', header: 'Start', render: (r) => r.start_date ? format(new Date(r.start_date), 'MMM d, yyyy') : '—' },
+  { key: 'end_date', header: 'End', render: (r) => r.end_date ? format(new Date(r.end_date), 'MMM d, yyyy') : '—' },
+  { key: 'pay_date', header: 'Pay Date', render: (r) => r.pay_date ? format(new Date(r.pay_date), 'MMM d, yyyy') : '—' },
   {
     key: 'status', header: 'Status',
     render: (r) => <Badge variant={statusBadge(r.status)}>{r.status}</Badge>,

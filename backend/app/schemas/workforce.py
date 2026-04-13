@@ -137,11 +137,16 @@ class EmployeeResponse(EmployeeBase):
 class EmployeeListResponse(BaseModel):
     id: str
     employee_id: str
+    employee_number: str | None = None
     first_name: str
     last_name: str
+    full_name: str | None = None
     email: str
     department_id: str
+    department_name: str | None = None
     job_id: str
+    job_title: str | None = None
+    hire_date: date | None = None
     employment_status: str
     employment_type: str
     base_salary: Decimal

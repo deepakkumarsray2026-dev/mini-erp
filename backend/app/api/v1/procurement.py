@@ -32,7 +32,25 @@ async def list_prs(
     db: AsyncSession = Depends(get_db),
 ):
     prs, total = await procurement_service.list_prs(db, employee_id, status, page, page_size)
-    return paginate(prs, total, page, page_size)
+    items = [
+        {
+            "id":             pr.id,
+            "pr_number":      pr.pr_number,
+            "requested_by":   pr.requested_by,
+            "requester_name": f"{pr.requester.first_name} {pr.requester.last_name}" if pr.requester else None,
+            "department_id":  pr.department_id,
+            "title":          pr.title,
+            "justification":  pr.justification,
+            "required_date":  pr.required_date,
+            "total_amount":   pr.total_amount,
+            "currency":       pr.currency,
+            "status":         pr.status,
+            "approved_by":    pr.approved_by,
+            "created_at":     pr.created_at,
+        }
+        for pr in prs
+    ]
+    return paginate(items, total, page, page_size)
 
 
 @router.post("/requisitions", response_model=PRResponse, status_code=201)
@@ -105,7 +123,25 @@ async def list_pos(
     db: AsyncSession = Depends(get_db),
 ):
     pos, total = await procurement_service.list_pos(db, vendor_id, status, page, page_size)
-    return paginate(pos, total, page, page_size)
+    items = [
+        {
+            "id":                po.id,
+            "po_number":         po.po_number,
+            "requisition_id":    po.requisition_id,
+            "vendor_id":         po.vendor_id,
+            "vendor_name":       po.vendor.name if po.vendor else None,
+            "issued_date":       po.issued_date,
+            "expected_delivery": po.expected_delivery,
+            "total_amount":      po.total_amount,
+            "currency":          po.currency,
+            "status":            po.status,
+            "approved_by":       po.approved_by,
+            "lines":             po.lines,
+            "created_at":        po.created_at,
+        }
+        for po in pos
+    ]
+    return paginate(items, total, page, page_size)
 
 
 @router.post("/orders", response_model=POResponse, status_code=201)

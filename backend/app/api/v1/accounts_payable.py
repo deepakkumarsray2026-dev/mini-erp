@@ -73,7 +73,30 @@ async def list_invoices(
     db: AsyncSession = Depends(get_db),
 ):
     invoices, total = await invoice_service.list_invoices(db, vendor_id, status, page, page_size)
-    return paginate(invoices, total, page, page_size)
+    items = [
+        {
+            "id":             inv.id,
+            "invoice_number": inv.invoice_number,
+            "vendor_id":      inv.vendor_id,
+            "vendor_name":    inv.vendor.name if inv.vendor else None,
+            "po_id":          inv.po_id,
+            "invoice_date":   inv.invoice_date,
+            "due_date":       inv.due_date,
+            "currency":       inv.currency,
+            "subtotal":       inv.subtotal,
+            "tax_amount":     inv.tax_amount,
+            "total_amount":   inv.total_amount,
+            "paid_amount":    inv.voucher.amount if inv.voucher else 0,
+            "status":         inv.status,
+            "description":    inv.description,
+            "category":       inv.category,
+            "is_duplicate":   inv.is_duplicate,
+            "lines":          inv.lines,
+            "created_at":     inv.created_at,
+        }
+        for inv in invoices
+    ]
+    return paginate(items, total, page, page_size)
 
 
 @router.post("/invoices", response_model=InvoiceResponse, status_code=201)

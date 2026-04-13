@@ -21,8 +21,11 @@ async def list_prs(db: AsyncSession, employee_id: str | None = None, status: str
     if status:
         q = q.where(PurchaseRequisition.status == status)
     total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar()
-    result = await db.execute(q.order_by(PurchaseRequisition.created_at.desc())
-                               .offset((page - 1) * page_size).limit(page_size))
+    result = await db.execute(
+        q.options(selectinload(PurchaseRequisition.requester))
+         .order_by(PurchaseRequisition.created_at.desc())
+         .offset((page - 1) * page_size).limit(page_size)
+    )
     return result.scalars().all(), total
 
 
@@ -91,8 +94,11 @@ async def list_pos(db: AsyncSession, vendor_id: str | None = None, status: str |
     if status:
         q = q.where(PurchaseOrder.status == status)
     total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar()
-    result = await db.execute(q.order_by(PurchaseOrder.created_at.desc())
-                               .offset((page - 1) * page_size).limit(page_size))
+    result = await db.execute(
+        q.options(selectinload(PurchaseOrder.lines), selectinload(PurchaseOrder.vendor))
+         .order_by(PurchaseOrder.created_at.desc())
+         .offset((page - 1) * page_size).limit(page_size)
+    )
     return result.scalars().all(), total
 
 

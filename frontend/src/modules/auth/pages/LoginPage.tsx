@@ -31,8 +31,17 @@ export default function LoginPage() {
       setUser(user)
       navigate('/dashboard')
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg ?? 'Invalid username or password.')
+      const detail = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      let msg: string
+      if (Array.isArray(detail)) {
+        // FastAPI 422 validation errors: [{type, loc, msg, input}, ...]
+        msg = detail.map((d: { msg?: string }) => d.msg ?? String(d)).join('; ')
+      } else if (typeof detail === 'string') {
+        msg = detail
+      } else {
+        msg = 'Invalid username or password.'
+      }
+      setError(msg)
     } finally {
       setLoading(false)
     }

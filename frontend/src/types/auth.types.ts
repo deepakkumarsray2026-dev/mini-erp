@@ -15,13 +15,8 @@ export interface User {
   email: string
   full_name: string
   is_active: boolean
-  is_superuser: boolean
-  roles: Role[]
-  created_at: string
-}
-
-export interface Role {
-  id: string
-  name: string
-  description: string
+  is_superuser?: boolean
+  roles: string[]
+  permissions?: string[]
+  created_at?: string
 }

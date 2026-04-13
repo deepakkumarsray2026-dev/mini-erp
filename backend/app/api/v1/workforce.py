@@ -24,13 +24,16 @@ router = APIRouter()
 
 # ── Departments ───────────────────────────────────────────────────────────────
 
-@router.get("/departments", response_model=list[DepartmentResponse])
+@router.get("/departments", response_model=PaginatedResponse[DepartmentResponse])
 async def list_departments(
     active_only: bool = True,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
     _=Depends(can_read(ModuleName.WORKFORCE)),
     db: AsyncSession = Depends(get_db),
 ):
-    return await employee_service.list_departments(db, active_only)
+    items, total = await employee_service.list_departments(db, active_only, page, page_size)
+    return paginate(items, total, page, page_size)
 
 
 @router.post("/departments", response_model=DepartmentResponse, status_code=201)
@@ -144,7 +147,29 @@ async def list_employees(
     employees, total = await employee_service.list_employees(
         db, page, page_size, search, department_id, active_only
     )
-    return paginate(employees, total, page, page_size)
+    items = [
+        {
+            "id":                e.id,
+            "employee_number":   e.employee_id,
+            "employee_id":       e.employee_id,
+            "full_name":         f"{e.first_name} {e.last_name}",
+            "first_name":        e.first_name,
+            "last_name":         e.last_name,
+            "email":             e.email,
+            "department_name":   e.department.name if e.department else None,
+            "department_id":     e.department_id,
+            "job_title":         e.job.title if e.job else None,
+            "job_id":            e.job_id,
+            "hire_date":         e.hire_date,
+            "employment_status": e.employment_status,
+            "employment_type":   e.employment_type,
+            "base_salary":       e.base_salary,
+            "currency":          e.currency,
+            "is_active":         e.is_active,
+        }
+        for e in employees
+    ]
+    return paginate(items, total, page, page_size)
 
 
 @router.post("/employees", response_model=EmployeeResponse, status_code=201)

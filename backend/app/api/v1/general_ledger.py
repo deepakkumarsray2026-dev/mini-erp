@@ -24,14 +24,17 @@ router = APIRouter()
 
 # ── Chart of Accounts ─────────────────────────────────────────────────────────
 
-@router.get("/accounts", response_model=list[AccountResponse])
+@router.get("/accounts", response_model=PaginatedResponse[AccountResponse])
 async def list_accounts(
     account_type: str | None = None,
     active_only: bool = True,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
     _=Depends(can_read(ModuleName.GL)),
     db: AsyncSession = Depends(get_db),
 ):
-    return await gl_service.list_accounts(db, account_type, active_only)
+    items, total = await gl_service.list_accounts(db, account_type, active_only, page, page_size)
+    return paginate(items, total, page, page_size)
 
 
 @router.post("/accounts", response_model=AccountResponse, status_code=201)
@@ -178,9 +181,11 @@ async def update_budget(
 
 @router.get("/trial-balance", response_model=list[TrialBalanceLine])
 async def get_trial_balance(
-    fiscal_year: int = Query(..., description="Fiscal year e.g. 2025"),
+    fiscal_year: int | None = Query(None, description="Fiscal year e.g. 2025, defaults to current year"),
     period_number: int | None = Query(None, description="Up to and including this period"),
     _=Depends(can_read(ModuleName.GL)),
     db: AsyncSession = Depends(get_db),
 ):
-    return await gl_service.get_trial_balance(db, fiscal_year, period_number)
+    from datetime import date
+    year = fiscal_year or date.today().year
+    return await gl_service.get_trial_balance(db, year, period_number)

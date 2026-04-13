@@ -81,7 +81,8 @@ async def list_invoices(
         q = q.where(Invoice.status == status)
     total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar()
     result = await db.execute(
-        q.order_by(Invoice.created_at.desc())
+        q.options(selectinload(Invoice.lines), selectinload(Invoice.vendor), selectinload(Invoice.voucher))
+         .order_by(Invoice.created_at.desc())
          .offset((page - 1) * page_size).limit(page_size)
     )
     return result.scalars().all(), total

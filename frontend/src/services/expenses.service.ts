@@ -9,4 +9,19 @@ export const expensesService = {
     })
     return res.data
   },
+
+  async createReport(data: Record<string, unknown>): Promise<ExpenseReport> {
+    const res = await api.post<ExpenseReport>('/expenses/reports', data)
+    return res.data
+  },
+
+  async approveReport(id: string): Promise<ExpenseReport> {
+    const res = await api.post<ExpenseReport>(`/expenses/reports/${id}/approve`)
+    return res.data
+  },
+
+  async rejectReport(id: string, reason: string): Promise<ExpenseReport> {
+    const res = await api.post<ExpenseReport>(`/expenses/reports/${id}/reject`, { reason })
+    return res.data
+  },
 }

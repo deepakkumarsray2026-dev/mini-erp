@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 
 from app.models.payroll import PayGroup, PayPeriod, PayPeriodStatus, PayrollRun, PaySlip, PayComponent
@@ -32,14 +33,19 @@ async def create_pay_group(db: AsyncSession, data: PayGroupCreate) -> PayGroup:
 
 # ── Pay Periods ───────────────────────────────────────────────────────────────
 
-async def list_pay_periods(db: AsyncSession, pay_group_id: str | None = None, fiscal_year: int | None = None) -> list[PayPeriod]:
+async def list_pay_periods(db: AsyncSession, pay_group_id: str | None = None, fiscal_year: int | None = None, page: int = 1, page_size: int = 20) -> tuple[list[PayPeriod], int]:
     q = select(PayPeriod)
     if pay_group_id:
         q = q.where(PayPeriod.pay_group_id == pay_group_id)
     if fiscal_year:
         q = q.where(PayPeriod.fiscal_year == fiscal_year)
-    result = await db.execute(q.order_by(PayPeriod.start_date.desc()))
-    return result.scalars().all()
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar()
+    result = await db.execute(
+        q.options(selectinload(PayPeriod.pay_group))
+         .order_by(PayPeriod.start_date.desc())
+         .offset((page - 1) * page_size).limit(page_size)
+    )
+    return result.scalars().all(), total
 
 
 async def get_pay_period(db: AsyncSession, period_id: str) -> PayPeriod:
@@ -184,14 +190,22 @@ async def confirm_payroll_run(db: AsyncSession, run_id: str) -> PayrollRun:
 
 # ── Payslips ──────────────────────────────────────────────────────────────────
 
-async def list_payslips(db: AsyncSession, payroll_run_id: str | None = None, employee_id: str | None = None) -> list[PaySlip]:
+async def list_payslips(db: AsyncSession, payroll_run_id: str | None = None, employee_id: str | None = None, page: int = 1, page_size: int = 20) -> tuple[list[PaySlip], int]:
     q = select(PaySlip)
     if payroll_run_id:
         q = q.where(PaySlip.payroll_run_id == payroll_run_id)
     if employee_id:
         q = q.where(PaySlip.employee_id == employee_id)
-    result = await db.execute(q.order_by(PaySlip.created_at.desc()))
-    return result.scalars().all()
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar()
+    result = await db.execute(
+        q.options(
+            selectinload(PaySlip.employee),
+            selectinload(PaySlip.payroll_run).selectinload(PayrollRun.pay_period),
+        )
+        .order_by(PaySlip.created_at.desc())
+        .offset((page - 1) * page_size).limit(page_size)
+    )
+    return result.scalars().all(), total
 
 
 async def get_payslip(db: AsyncSession, payslip_id: str) -> PaySlip:

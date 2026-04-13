@@ -106,12 +106,29 @@ async def login(db: AsyncSession, data: LoginRequest) -> dict:
 
     logger.info(f"Login success: {user.username}")
 
+    permissions = []
+    for ur in user.user_roles:
+        if ur.is_active:
+            for perm in ur.role.permissions:
+                permissions.append(perm)
+
     return {
         "access_token":  access_token,
         "refresh_token": refresh_token_raw,
         "token_type":    "bearer",
         "expires_in":    settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        "user":          user,
+        "user": {
+            "id":                   user.id,
+            "username":             user.username,
+            "email":                user.email,
+            "full_name":            user.full_name,
+            "is_active":            user.is_active,
+            "is_verified":          user.is_verified,
+            "must_change_password": user.must_change_password,
+            "last_login_at":        user.last_login_at,
+            "roles":                role_codes,
+            "permissions":          permissions,
+        },
     }
 
 

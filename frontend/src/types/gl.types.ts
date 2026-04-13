@@ -1,6 +1,6 @@
 export interface Account {
   id: string
-  account_number: string
+  account_code: string
   account_name: string
   account_type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
   parent_id: string | null
@@ -14,18 +14,18 @@ export interface Journal {
   journal_number: string
   journal_date: string
   description: string
-  reference: string | null
-  total_debits: number
-  total_credits: number
+  source: string | null
+  total_debit: number
+  total_credit: number
   status: 'draft' | 'posted' | 'reversed'
   created_by: string | null
   created_at: string
 }
 
 export interface TrialBalanceEntry {
-  account_number: string
+  account_code: string
   account_name: string
   account_type: string
-  debit_balance: number
-  credit_balance: number
+  total_debit: number
+  total_credit: number
 }
