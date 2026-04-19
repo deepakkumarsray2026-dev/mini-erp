@@ -1,15 +1,23 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Briefcase } from 'lucide-react'
+import { Briefcase, Users, BarChart3, ShieldCheck, Zap } from 'lucide-react'
 import { authService } from '../../../services/auth.service'
 import { useStore } from '../../../store'
-import { Spinner } from '../../../components/common/Spinner'
+import { Button } from '../../../components/common/Button'
+import { Alert } from '../../../components/common/Alert'
 
 interface FormData {
   username: string
   password: string
 }
+
+const features = [
+  { icon: <Users className="h-4 w-4" />, text: 'Workforce & payroll management' },
+  { icon: <BarChart3 className="h-4 w-4" />, text: 'Real-time financial insights' },
+  { icon: <Zap className="h-4 w-4" />, text: 'AI-powered anomaly detection' },
+  { icon: <ShieldCheck className="h-4 w-4" />, text: 'Role-based access control' },
+]
 
 export default function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
@@ -46,125 +54,110 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center px-4 py-16"
-      style={{ backgroundColor: '#131314' }}
-    >
-      {/* Logo mark */}
-      <div className="mb-10 flex flex-col items-center gap-4">
-        <div
-          className="flex h-11 w-11 items-center justify-center rounded-xl"
-          style={{ backgroundColor: '#d97757' }}
-        >
-          <Briefcase className="h-5 w-5 text-white" />
+    <div className="flex min-h-screen">
+      {/* Left panel — brand */}
+      <div
+        className="hidden lg:flex lg:w-5/12 flex-col justify-between p-12 text-white"
+        style={{ background: 'linear-gradient(160deg, #0057AE 0%, #1C2B4A 100%)' }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <Briefcase className="h-5 w-5 text-white" />
+          </div>
+          <span className="text-lg font-semibold tracking-tight">Mini ERP</span>
         </div>
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: '#f0ece3' }}>
-            Mini ERP
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: '#6b6b6b' }}>
-            Sign in to your workspace
+
+        <div>
+          <h2 className="text-4xl font-bold leading-tight">
+            Your enterprise.<br />Unified.
+          </h2>
+          <p className="mt-4 text-blue-100 text-base leading-relaxed max-w-xs">
+            One platform for HR, finance, procurement, and AI-powered insights across your entire organisation.
+          </p>
+          <ul className="mt-8 space-y-3">
+            {features.map((f, i) => (
+              <li key={i} className="flex items-center gap-3 text-sm text-blue-100">
+                <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/15">
+                  {f.icon}
+                </span>
+                {f.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="text-xs text-blue-300">
+          &copy; {new Date().getFullYear()} Mini ERP · Portfolio Project
+        </p>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex flex-1 items-center justify-center bg-[#F0F2F5] px-6 py-12">
+        <div className="w-full max-w-sm">
+          {/* Mobile logo */}
+          <div className="mb-8 flex flex-col items-center lg:hidden">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl mb-3" style={{ backgroundColor: '#0057AE' }}>
+              <Briefcase className="h-6 w-6 text-white" />
+            </div>
+            <h1 className="text-xl font-bold" style={{ color: '#111827' }}>Mini ERP</h1>
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold" style={{ color: '#111827' }}>Sign in</h3>
+            <p className="mt-1 text-sm" style={{ color: '#6B7280' }}>Enter your credentials to access your account</p>
+          </div>
+
+          <div
+            className="rounded-2xl p-8"
+            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E6EA', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
+          >
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              {error && <Alert type="error" message={error} />}
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: '#374151' }}>
+                  Username
+                </label>
+                <input
+                  {...register('username', { required: 'Username is required' })}
+                  className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all"
+                  style={{ borderColor: '#D1D5DB', color: '#111827' }}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#0057AE')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#D1D5DB')}
+                  placeholder="admin"
+                  autoComplete="username"
+                />
+                {errors.username && <p className="mt-1.5 text-xs text-red-500">{errors.username.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: '#374151' }}>
+                  Password
+                </label>
+                <input
+                  {...register('password', { required: 'Password is required' })}
+                  type="password"
+                  className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all"
+                  style={{ borderColor: '#D1D5DB', color: '#111827' }}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#0057AE')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#D1D5DB')}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+                {errors.password && <p className="mt-1.5 text-xs text-red-500">{errors.password.message}</p>}
+              </div>
+
+              <Button type="submit" loading={loading} size="lg" className="w-full justify-center mt-1">
+                Sign in
+              </Button>
+            </form>
+          </div>
+
+          <p className="mt-6 text-center text-xs" style={{ color: '#9CA3AF' }}>
+            Mini ERP · Portfolio Project
           </p>
         </div>
       </div>
-
-      {/* Card */}
-      <div
-        className="w-full max-w-sm rounded-2xl p-8"
-        style={{ backgroundColor: '#1c1c1e', border: '1px solid #2a2a2e' }}
-      >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-
-          {/* Error banner */}
-          {error && (
-            <div
-              className="rounded-lg px-4 py-3 text-sm"
-              style={{ backgroundColor: '#2a1a1a', border: '1px solid #4a2020', color: '#df9090' }}
-            >
-              {error}
-            </div>
-          )}
-
-          {/* Username */}
-          <div>
-            <label
-              className="block text-sm font-medium mb-1.5"
-              style={{ color: '#c4c0b8' }}
-            >
-              Username
-            </label>
-            <input
-              {...register('username', { required: 'Username is required' })}
-              className="w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all"
-              style={{
-                backgroundColor: '#111113',
-                border: '1px solid #2e2e32',
-                color: '#f0ece3',
-              }}
-              onFocus={e => (e.currentTarget.style.borderColor = '#d97757')}
-              onBlur={e => (e.currentTarget.style.borderColor = '#2e2e32')}
-              placeholder="admin"
-              autoComplete="username"
-            />
-            {errors.username && (
-              <p className="mt-1.5 text-xs" style={{ color: '#df9090' }}>
-                {errors.username.message}
-              </p>
-            )}
-          </div>
-
-          {/* Password */}
-          <div>
-            <label
-              className="block text-sm font-medium mb-1.5"
-              style={{ color: '#c4c0b8' }}
-            >
-              Password
-            </label>
-            <input
-              {...register('password', { required: 'Password is required' })}
-              type="password"
-              className="w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all"
-              style={{
-                backgroundColor: '#111113',
-                border: '1px solid #2e2e32',
-                color: '#f0ece3',
-              }}
-              onFocus={e => (e.currentTarget.style.borderColor = '#d97757')}
-              onBlur={e => (e.currentTarget.style.borderColor = '#2e2e32')}
-              placeholder="••••••••"
-              autoComplete="current-password"
-            />
-            {errors.password && (
-              <p className="mt-1.5 text-xs" style={{ color: '#df9090' }}>
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-1 w-full rounded-lg py-2.5 text-sm font-medium transition-opacity disabled:opacity-60"
-            style={{ backgroundColor: '#d97757', color: '#fff' }}
-            onMouseEnter={e => !loading && (e.currentTarget.style.opacity = '0.88')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Spinner size="sm" /> Signing in…
-              </span>
-            ) : (
-              'Sign in'
-            )}
-          </button>
-        </form>
-      </div>
-
-      <p className="mt-8 text-xs" style={{ color: '#3a3a3e' }}>
-        &copy; {new Date().getFullYear()} Mini ERP · Portfolio Project
-      </p>
     </div>
   )
 }

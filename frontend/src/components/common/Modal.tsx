@@ -24,27 +24,27 @@ export function Modal({ open, title, onClose, children, footer, size = 'md' }: P
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div
-        className={`relative w-full ${widths[size]} rounded-2xl shadow-2xl flex flex-col max-h-[90vh]`}
-        style={{ backgroundColor: '#1c1c1e', border: '1px solid #2a2a2e' }}
+        className={`relative w-full ${widths[size]} rounded-2xl flex flex-col max-h-[90vh]`}
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E6EA', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
       >
         <div
           className="flex items-center justify-between px-6 py-4 flex-shrink-0"
-          style={{ borderBottom: '1px solid #232326' }}
+          style={{ borderBottom: '1px solid #F3F4F6' }}
         >
-          <h2 className="text-[15px] font-semibold tracking-tight" style={{ color: '#f0ece3' }}>{title}</h2>
+          <h2 className="text-[15px] font-semibold tracking-tight" style={{ color: '#111827' }}>{title}</h2>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 transition-colors"
-            style={{ color: '#555558' }}
+            style={{ color: '#9CA3AF' }}
             onMouseEnter={e => {
-              e.currentTarget.style.backgroundColor = '#222224'
-              e.currentTarget.style.color = '#c4c0b8'
+              e.currentTarget.style.backgroundColor = '#F3F4F6'
+              e.currentTarget.style.color = '#374151'
             }}
             onMouseLeave={e => {
               e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = '#555558'
+              e.currentTarget.style.color = '#9CA3AF'
             }}
           >
             <X className="h-4 w-4" />
@@ -54,7 +54,7 @@ export function Modal({ open, title, onClose, children, footer, size = 'md' }: P
         {footer && (
           <div
             className="flex justify-end gap-2.5 px-6 py-4 flex-shrink-0"
-            style={{ borderTop: '1px solid #232326' }}
+            style={{ borderTop: '1px solid #F3F4F6' }}
           >
             {footer}
           </div>
@@ -67,24 +67,7 @@ export function Modal({ open, title, onClose, children, footer, size = 'md' }: P
 // ── Shared form helpers ────────────────────────────────────────────────────────
 
 export const inputCls =
-  'w-full rounded-lg px-3 py-2 text-sm outline-none transition-all disabled:opacity-50 bg-[#111113] border border-[#2e2e32] text-[#f0ece3] placeholder:text-[#555558] focus:border-[#d97757]'
-
-// inputCls needs inline styles — use inputStyle alongside inputCls
-export const inputStyle: React.CSSProperties = {
-  backgroundColor: '#111113',
-  border: '1px solid #2e2e32',
-  color: '#f0ece3',
-}
-
-// Helper to merge focus border — use onFocus/onBlur on the element
-export const inputFocusHandlers = {
-  onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    e.currentTarget.style.borderColor = '#d97757'
-  },
-  onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    e.currentTarget.style.borderColor = '#2e2e32'
-  },
-}
+  'w-full rounded-lg px-3 py-2 text-sm outline-none transition-all disabled:opacity-50 bg-white border border-[#D1D5DB] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#0057AE] focus:ring-2 focus:ring-[#0057AE]/15'
 
 interface FieldProps {
   label: string
@@ -96,11 +79,11 @@ interface FieldProps {
 export function Field({ label, error, required, children }: FieldProps) {
   return (
     <div>
-      <label className="block text-[13px] font-medium mb-1.5" style={{ color: '#c4c0b8' }}>
-        {label}{required && <span className="ml-0.5" style={{ color: '#df9090' }}>*</span>}
+      <label className="block text-[13px] font-medium mb-1.5" style={{ color: '#374151' }}>
+        {label}{required && <span className="ml-0.5 text-red-500">*</span>}
       </label>
       {children}
-      {error && <p className="mt-1.5 text-xs" style={{ color: '#df9090' }}>{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
     </div>
   )
 }
@@ -115,24 +98,24 @@ export function FormActions({
   submitLabel?: string
 }) {
   return (
-    <div className="flex justify-end gap-2.5 mt-6 pt-4" style={{ borderTop: '1px solid #232326' }}>
+    <div className="flex justify-end gap-2.5 mt-6 pt-4" style={{ borderTop: '1px solid #F3F4F6' }}>
       <button
         type="button"
         onClick={onCancel}
         className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors"
-        style={{ color: '#c4c0b8', backgroundColor: '#1c1c1e', border: '1px solid #2a2a2e' }}
-        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#222224')}
-        onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1c1c1e')}
+        style={{ color: '#374151', backgroundColor: '#FFFFFF', border: '1px solid #D1D5DB' }}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#F9FAFB')}
+        onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
       >
         Cancel
       </button>
       <button
         type="submit"
         disabled={loading}
-        className="px-4 py-2 text-[13px] font-medium text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-        style={{ backgroundColor: '#d97757' }}
-        onMouseEnter={e => !loading && (e.currentTarget.style.opacity = '0.88')}
-        onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+        className="px-4 py-2 text-[13px] font-medium text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        style={{ backgroundColor: '#0057AE' }}
+        onMouseEnter={e => !loading && (e.currentTarget.style.backgroundColor = '#004A9E')}
+        onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#0057AE')}
       >
         {loading ? 'Saving…' : submitLabel}
       </button>

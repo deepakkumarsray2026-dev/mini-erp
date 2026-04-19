@@ -31,18 +31,18 @@ export function DataTable<T extends { id: string }>({
 }: Props<T>) {
   return (
     <div
-      className="overflow-hidden rounded-xl shadow-sm"
-      style={{ border: '1px solid #2a2a2e', backgroundColor: '#1c1c1e' }}
+      className="overflow-hidden rounded-xl"
+      style={{ border: '1px solid #E2E6EA', backgroundColor: '#FFFFFF', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
     >
       <div className="overflow-x-auto">
         <table className="min-w-full" style={{ borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ backgroundColor: '#111113' }}>
+            <tr style={{ backgroundColor: '#F8F9FB' }}>
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={`px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest ${col.className ?? ''}`}
-                  style={{ color: '#555558', borderBottom: '1px solid #232326' }}
+                  style={{ color: '#6B7280', borderBottom: '1px solid #E2E6EA' }}
                 >
                   {col.header}
                 </th>
@@ -58,11 +58,7 @@ export function DataTable<T extends { id: string }>({
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td
-                  colSpan={columns.length}
-                  className="px-4 py-14 text-center text-sm"
-                  style={{ color: '#555558' }}
-                >
+                <td colSpan={columns.length} className="px-4 py-14 text-center text-sm" style={{ color: '#9CA3AF' }}>
                   {emptyMessage}
                 </td>
               </tr>
@@ -71,15 +67,15 @@ export function DataTable<T extends { id: string }>({
                 <tr
                   key={row.id}
                   className="transition-colors duration-100"
-                  style={{ borderTop: idx > 0 ? '1px solid #232326' : undefined }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#222224')}
+                  style={{ borderTop: idx > 0 ? '1px solid #F3F4F6' : undefined }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#F8FAFF')}
                   onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   {columns.map((col) => (
                     <td
                       key={col.key}
                       className={`px-4 py-3 text-[13px] ${col.className ?? ''}`}
-                      style={{ color: '#c4c0b8' }}
+                      style={{ color: '#374151' }}
                     >
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '')}
                     </td>

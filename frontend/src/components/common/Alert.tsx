@@ -7,18 +7,15 @@ interface Props {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  info:    { backgroundColor: '#1a1a2a', border: '1px solid #2a2a50', color: '#9090df' },
-  success: { backgroundColor: '#1a2a1a', border: '1px solid #2a4a2a', color: '#90cf90' },
-  warning: { backgroundColor: '#2a2010', border: '1px solid #504020', color: '#dfba80' },
-  error:   { backgroundColor: '#2a1a1a', border: '1px solid #4a2020', color: '#df9090' },
+  info:    { backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8' },
+  success: { backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#15803D' },
+  warning: { backgroundColor: '#FFFBEB', border: '1px solid #FDE68A', color: '#92400E' },
+  error:   { backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626' },
 }
 
 export function Alert({ type = 'info', message, className }: Props) {
   return (
-    <div
-      className={clsx('rounded-lg px-4 py-3 text-sm', className)}
-      style={styles[type]}
-    >
+    <div className={clsx('rounded-lg px-4 py-3 text-sm', className)} style={styles[type]}>
       {message}
     </div>
   )

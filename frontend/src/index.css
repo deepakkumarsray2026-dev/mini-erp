@@ -6,8 +6,8 @@
 
 @layer base {
   body {
-    background-color: #131314;
-    color: #f0ece3;
+    background-color: #F0F2F5;
+    color: #111827;
     @apply antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }

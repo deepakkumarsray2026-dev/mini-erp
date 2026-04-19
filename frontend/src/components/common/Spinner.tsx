@@ -15,7 +15,7 @@ export function Spinner({ size = 'md', className }: Props) {
         size === 'lg' && 'h-12 w-12',
         className,
       )}
-      style={{ borderColor: '#2a2a2e', borderTopColor: '#d97757' }}
+      style={{ borderColor: '#E2E6EA', borderTopColor: '#0057AE' }}
     />
   )
 }

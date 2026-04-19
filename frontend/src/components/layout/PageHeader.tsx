@@ -8,8 +8,8 @@ export function PageHeader({ title, description, actions }: Props) {
   return (
     <div className="flex items-start justify-between mb-6">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight" style={{ color: '#f0ece3' }}>{title}</h2>
-        {description && <p className="mt-0.5 text-sm" style={{ color: '#6b6b6b' }}>{description}</p>}
+        <h2 className="text-xl font-semibold tracking-tight" style={{ color: '#111827' }}>{title}</h2>
+        {description && <p className="mt-0.5 text-sm" style={{ color: '#6B7280' }}>{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-2.5 flex-shrink-0">{actions}</div>}
     </div>

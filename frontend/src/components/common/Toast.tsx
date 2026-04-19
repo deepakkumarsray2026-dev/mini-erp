@@ -3,10 +3,10 @@ import { X, CheckCircle, AlertCircle, Info } from 'lucide-react'
 import { useStore } from '../../store'
 
 const icons = {
-  success: <CheckCircle className="h-5 w-5" style={{ color: '#7abf7a' }} />,
-  error:   <AlertCircle className="h-5 w-5" style={{ color: '#df9090' }} />,
-  info:    <Info className="h-5 w-5" style={{ color: '#8888df' }} />,
-  warning: <AlertCircle className="h-5 w-5" style={{ color: '#dfba80' }} />,
+  success: <CheckCircle className="h-5 w-5 text-green-600" />,
+  error:   <AlertCircle className="h-5 w-5 text-red-500" />,
+  info:    <Info className="h-5 w-5 text-blue-600" />,
+  warning: <AlertCircle className="h-5 w-5 text-amber-500" />,
 }
 
 function ToastItem({ id, type, message }: { id: string; type: 'success' | 'error' | 'info' | 'warning'; message: string }) {
@@ -18,16 +18,16 @@ function ToastItem({ id, type, message }: { id: string; type: 'success' | 'error
 
   return (
     <div
-      className="flex items-start gap-3 rounded-lg p-4 shadow-xl"
-      style={{ backgroundColor: '#1c1c1e', border: '1px solid #2a2a2e' }}
+      className="flex items-start gap-3 rounded-xl p-4 shadow-lg"
+      style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E6EA' }}
     >
       {icons[type]}
-      <p className="flex-1 text-sm" style={{ color: '#f0ece3' }}>{message}</p>
+      <p className="flex-1 text-sm" style={{ color: '#111827' }}>{message}</p>
       <button
         onClick={() => remove(id)}
         className="rounded p-0.5 transition-colors"
-        style={{ color: '#555558' }}
-        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#222224')}
+        style={{ color: '#9CA3AF' }}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#F3F4F6')}
         onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
       >
         <X className="h-4 w-4" />
