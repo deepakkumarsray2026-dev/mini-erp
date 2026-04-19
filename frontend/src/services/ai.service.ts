@@ -35,6 +35,9 @@ export const aiService = {
   getInvoiceClassifications: (limit = 10) =>
     api.get('/mlops/insights/invoice-classifications', { params: { limit } }).then((r) => r.data),
 
+  getPayrollAnomalies: (limit = 10) =>
+    api.get('/mlops/insights/payroll-anomalies', { params: { limit } }).then((r) => r.data),
+
   // Audit log & jobs
   getPredictions: (params?: { page?: number; entity_type?: string; model_type?: string }) =>
     api.get('/mlops/predictions', { params }).then((r) => r.data),

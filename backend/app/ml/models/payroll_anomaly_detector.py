@@ -291,6 +291,92 @@ def predict(
     return result
 
 
+# ── Batch insights ────────────────────────────────────────────────────────────
+
+
+def predict_all_top(limit: int = 10) -> list[dict]:
+    """Score all payslips and return the top N by anomaly probability.
+
+    Returns a list of dicts enriched with employee name, gross pay, pay period,
+    and risk_pct — ready for the AI dashboard insights endpoint.
+
+    Raises:
+        FileNotFoundError: When the model artifact has not been trained yet.
+    """
+    from sqlalchemy import text as _text
+
+    from app.core.database import SyncSessionLocal
+
+    if not ARTIFACT_PATH.exists():
+        raise FileNotFoundError(
+            f"[{MODEL_NAME}] Model artifact not found at {ARTIFACT_PATH}. "
+            "Train it first: POST /api/v1/mlops/train/payroll_anomaly"
+        )
+
+    df = load_training_dataframe()
+    df = df.drop_duplicates(subset=["id"])
+
+    artifact = joblib.load(ARTIFACT_PATH)
+    X = df[FEATURE_COLS].astype(float)
+
+    if artifact["mode"] == "supervised":
+        pipeline: Pipeline = artifact["pipeline"]
+        probas = pipeline.predict_proba(X)[:, 1]
+    else:
+        scaler = artifact["scaler"]
+        iso: IsolationForest = artifact["model"]
+        X_scaled = scaler.transform(X)
+        scores = iso.decision_function(X_scaled)
+        probas = np.array([_score_to_probability(s) for s in scores])
+
+    df = df.copy()
+    df["anomaly_prob"] = probas
+    top_n = df.nlargest(limit, "anomaly_prob")
+    payslip_ids = [str(pid) for pid in top_n["id"].tolist()]
+
+    with SyncSessionLocal() as session:
+        rows = session.execute(
+            _text("""
+                SELECT
+                    ps.id::text,
+                    e.first_name || ' ' || e.last_name  AS full_name,
+                    e.employee_id                        AS employee_number,
+                    ps.gross_pay,
+                    ps.net_pay,
+                    pp.start_date::text,
+                    pp.end_date::text
+                FROM payroll.payslips ps
+                JOIN hcm.employees e            ON e.id = ps.employee_id
+                JOIN payroll.payroll_runs pr     ON pr.id = ps.payroll_run_id
+                JOIN payroll.pay_periods pp      ON pp.id = pr.pay_period_id
+                WHERE ps.id::text = ANY(:ids)
+            """),
+            {"ids": payslip_ids},
+        ).fetchall()
+
+    lookup: dict[str, tuple] = {r[0]: r for r in rows}
+
+    result: list[dict] = []
+    for _, row in top_n.iterrows():
+        ps_id = str(row["id"])
+        db_row = lookup.get(ps_id)
+        if not db_row:
+            continue
+        result.append(
+            {
+                "payslip_id": ps_id,
+                "full_name": db_row[1],
+                "employee_number": db_row[2],
+                "gross_pay": round(float(db_row[3]), 2),
+                "net_pay": round(float(db_row[4]), 2),
+                "pay_period_start": db_row[5],
+                "pay_period_end": db_row[6],
+                "risk_pct": round(float(row["anomaly_prob"]) * 100, 1),
+            }
+        )
+    return result
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
