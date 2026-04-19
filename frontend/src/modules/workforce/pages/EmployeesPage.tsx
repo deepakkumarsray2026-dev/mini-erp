@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Plus, Pencil } from 'lucide-react'
+import { Search, Plus, Pencil, AlertTriangle } from 'lucide-react'
+import { aiService } from '../../../services/ai.service'
 import { useForm } from 'react-hook-form'
 import { workforceService } from '../../../services/workforce.service'
 import { DataTable, type Column } from '../../../components/tables/DataTable'
@@ -156,6 +157,19 @@ export default function EmployeesPage() {
     queryFn: () => workforceService.getEmployees(page, 20, debouncedSearch || undefined),
   })
 
+  // Fetch attrition risk scores for all active employees (limit=500 covers full headcount)
+  const { data: riskData } = useQuery({
+    queryKey: ['attrition-scores-all'],
+    queryFn: () => aiService.getAttritionRisk(500),
+    staleTime: 5 * 60 * 1000, // 5 min cache — model scores don't change unless retrained
+    retry: false, // silently skip if model not trained
+  })
+
+  const riskMap = useMemo<Record<string, number>>(() => {
+    if (!Array.isArray(riskData)) return {}
+    return Object.fromEntries(riskData.map((r: any) => [r.employee_id, r.risk_pct]))
+  }, [riskData])
+
   const { data: departments = [] } = useQuery({
     queryKey: ['departments-all'],
     queryFn: () => workforceService.getAllDepartments(),
@@ -221,6 +235,25 @@ export default function EmployeesPage() {
           {r.employment_status.replace('_', ' ')}
         </Badge>
       ),
+    },
+    {
+      key: 'id' as keyof Employee, header: 'Attrition Risk',
+      render: (r) => {
+        const risk = riskMap[r.id]
+        if (risk == null) return <span className="text-xs text-gray-300">—</span>
+        const isHigh = risk >= 60
+        return (
+          <div className="flex items-center gap-1.5">
+            {isHigh && <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0" />}
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+              isHigh ? 'bg-red-100 text-red-700' : risk >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+            }`}>
+              {risk.toFixed(1)}%
+            </span>
+          </div>
+        )
+      },
+      className: 'w-36',
     },
     ...(isAdmin ? [{
       key: 'id' as keyof Employee, header: '',

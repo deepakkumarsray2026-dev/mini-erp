@@ -24,6 +24,7 @@ from app.ml.features.employee_features import (
     load_training_dataframe, build_inference_vector,
 )
 from app.core.config import settings
+from app.core.database import SyncSessionLocal
 
 
 MODEL_NAME    = "attrition_predictor"
@@ -89,6 +90,60 @@ def train() -> dict:
     logger.info(f"[{MODEL_NAME}] Saved → {ARTIFACT_PATH}  AUC={metrics['roc_auc']}")
 
     return metrics
+
+
+def predict_all_active(limit: int = 10) -> list[dict]:
+    """Batch-score all active employees; return top ``limit`` by risk descending.
+
+    Deduplicates rows that arise from the dept-headcount window JOIN, filters to
+    active-only (is_attrited == 0), and enriches results with employee names from DB.
+    """
+    if not ARTIFACT_PATH.exists():
+        raise FileNotFoundError(f"Model not trained yet: {ARTIFACT_PATH}")
+
+    df = load_training_dataframe()
+    df = df.drop_duplicates(subset=["id"])
+    active = df[df[TARGET_COL] == 0].copy()
+
+    if active.empty:
+        return []
+
+    pipeline = joblib.load(ARTIFACT_PATH)
+    X = active[FEATURE_COLS].astype(float)
+    probas = pipeline.predict_proba(X)[:, 1]
+    active = active.copy()
+    active["risk_score"] = probas
+
+    top_n = active.nlargest(limit, "risk_score")
+    emp_ids = [str(i) for i in top_n["id"].tolist()]
+
+    from sqlalchemy import text as _text
+    with SyncSessionLocal() as session:
+        rows = session.execute(_text("""
+            SELECT e.id::text, e.first_name, e.last_name, e.employee_id,
+                   d.name AS department_name
+            FROM hcm.employees e
+            LEFT JOIN hcm.departments d ON d.id = e.department_id
+            WHERE e.id::text = ANY(:ids)
+        """), {"ids": emp_ids}).fetchall()
+
+    info = {r[0]: {"first_name": r[1], "last_name": r[2],
+                   "employee_number": r[3], "department": r[4]} for r in rows}
+
+    results = []
+    for _, row in top_n.iterrows():
+        emp = info.get(str(row["id"]), {})
+        score = float(row["risk_score"])
+        results.append({
+            "employee_id":     str(row["id"]),
+            "employee_number": emp.get("employee_number", ""),
+            "full_name":       f"{emp.get('first_name','')} {emp.get('last_name','')}".strip(),
+            "department":      emp.get("department", ""),
+            "risk_score":      round(score, 4),
+            "risk_pct":        round(score * 100, 1),
+            "prediction":      "high_risk" if score >= 0.5 else "low_risk",
+        })
+    return results
 
 
 def predict(employee_dict: dict) -> dict:

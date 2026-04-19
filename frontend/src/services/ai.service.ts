@@ -25,6 +25,16 @@ export const aiService = {
   predictInvoice: (invoiceId: string) =>
     api.post(`/mlops/predict/invoice/${invoiceId}`).then((r) => r.data),
 
+  // Batch insights
+  getAttritionRisk: (limit = 10) =>
+    api.get('/mlops/insights/attrition-risk', { params: { limit } }).then((r) => r.data),
+
+  getExpenseViolations: (limit = 10) =>
+    api.get('/mlops/insights/expense-violations', { params: { limit } }).then((r) => r.data),
+
+  getInvoiceClassifications: (limit = 10) =>
+    api.get('/mlops/insights/invoice-classifications', { params: { limit } }).then((r) => r.data),
+
   // Audit log & jobs
   getPredictions: (params?: { page?: number; entity_type?: string; model_type?: string }) =>
     api.get('/mlops/predictions', { params }).then((r) => r.data),
