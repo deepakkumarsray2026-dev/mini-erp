@@ -27,6 +27,16 @@ TARGET_COL = "is_violation"
 
 def load_training_dataframe() -> pd.DataFrame:
     query = text("""
+        WITH emp_stats AS (
+            SELECT
+                er2.employee_id,
+                AVG(el2.amount)                                                AS employee_avg_spend,
+                SUM(CASE WHEN el2.is_violation THEN 1 ELSE 0 END)::float
+                    / NULLIF(COUNT(el2.id), 0)                                 AS employee_violation_rate
+            FROM expenses.expense_lines el2
+            JOIN expenses.expense_reports er2 ON er2.id = el2.report_id
+            GROUP BY er2.employee_id
+        )
         SELECT
             el.id,
             el.amount,
@@ -39,15 +49,13 @@ def load_training_dataframe() -> pd.DataFrame:
             ec.code          AS category_code,
             er.employee_id,
             e.hire_date,
-            AVG(el2.amount) OVER (PARTITION BY er.employee_id) AS employee_avg_spend,
-            SUM(CASE WHEN el2.is_violation THEN 1 ELSE 0 END)::float
-                / NULLIF(COUNT(el2.id) OVER (PARTITION BY er.employee_id), 0)
-                AS employee_violation_rate
+            COALESCE(es.employee_avg_spend, el.amount)      AS employee_avg_spend,
+            COALESCE(es.employee_violation_rate, 0)         AS employee_violation_rate
         FROM expenses.expense_lines el
-        JOIN expenses.expense_reports er   ON er.id = el.report_id
+        JOIN expenses.expense_reports er    ON er.id = el.report_id
         JOIN expenses.expense_categories ec ON ec.id = el.category_id
-        JOIN hcm.employees e               ON e.id = er.employee_id
-        LEFT JOIN expenses.expense_lines el2 ON el2.report_id = er.id
+        JOIN hcm.employees e                ON e.id = er.employee_id
+        LEFT JOIN emp_stats es              ON es.employee_id = er.employee_id
     """)
 
     with SyncSessionLocal() as session:
