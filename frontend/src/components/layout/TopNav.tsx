@@ -28,22 +28,40 @@ export function TopNav({ title }: Props) {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-gray-200/80 bg-white/80 backdrop-blur-sm px-6 sticky top-0 z-10">
-      <h1 className="text-sm font-semibold text-gray-900 tracking-tight">{title}</h1>
+    <header
+      className="flex h-14 items-center justify-between px-6 sticky top-0 z-10 backdrop-blur-sm"
+      style={{ backgroundColor: 'rgba(19,19,20,0.92)', borderBottom: '1px solid #232326' }}
+    >
+      <h1 className="text-sm font-semibold tracking-tight" style={{ color: '#f0ece3' }}>{title}</h1>
 
       <div className="flex items-center gap-3">
         {/* User chip */}
-        <div className="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white flex-shrink-0">
+        <div
+          className="flex items-center gap-2.5 rounded-lg px-3 py-1.5"
+          style={{ border: '1px solid #2a2a2e', backgroundColor: '#1c1c1e' }}
+        >
+          <div
+            className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white flex-shrink-0"
+            style={{ backgroundColor: '#d97757' }}
+          >
             {initials(displayName)}
           </div>
-          <span className="text-[13px] font-medium text-gray-700">{displayName}</span>
+          <span className="text-[13px] font-medium" style={{ color: '#c4c0b8' }}>{displayName}</span>
         </div>
 
         {/* Logout */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors"
+          style={{ color: '#6b6b6b' }}
+          onMouseEnter={e => {
+            e.currentTarget.style.backgroundColor = '#222224'
+            e.currentTarget.style.color = '#f0ece3'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.color = '#6b6b6b'
+          }}
         >
           <LogOut className="h-3.5 w-3.5" />
           Sign out

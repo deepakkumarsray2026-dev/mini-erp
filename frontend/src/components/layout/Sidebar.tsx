@@ -120,7 +120,7 @@ function NavGroup({ item }: { item: NavItem }) {
       >
         {({ isActive }) => (
           <>
-            <span className={clsx('flex-shrink-0 transition-colors', isActive ? 'text-blue-400' : '')}>
+            <span className={clsx('flex-shrink-0 transition-colors')} style={isActive ? { color: '#d97757' } : {}}>
               {item.icon}
             </span>
             {item.label}
@@ -143,7 +143,7 @@ function NavGroup({ item }: { item: NavItem }) {
           : <ChevronRight className="h-3 w-3 text-slate-500" />}
       </button>
       {open && item.children && (
-        <div className="ml-[26px] mt-0.5 flex flex-col border-l border-slate-700/60 pl-3 gap-0.5">
+        <div className="ml-[26px] mt-0.5 flex flex-col pl-3 gap-0.5" style={{ borderLeft: '1px solid #2a2a2e' }}>
           {item.children.map((child) => (
             <NavLink
               key={child.href}
@@ -168,20 +168,20 @@ function NavGroup({ item }: { item: NavItem }) {
 
 export function Sidebar() {
   return (
-    <aside className="flex h-full w-56 flex-col bg-[#0f1117] border-r border-white/5">
+    <aside className="flex h-full w-56 flex-col" style={{ backgroundColor: '#0d0d0e', borderRight: '1px solid #232326' }}>
       {/* Logo */}
-      <div className="flex h-14 items-center gap-2.5 px-4 border-b border-white/5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500 shadow-lg shadow-blue-500/30">
+      <div className="flex h-14 items-center gap-2.5 px-4" style={{ borderBottom: '1px solid #232326' }}>
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ backgroundColor: '#d97757', boxShadow: '0 4px 12px rgba(217,119,87,0.25)' }}>
           <Zap className="h-4 w-4 text-white" />
         </div>
-        <span className="text-[15px] font-semibold text-white tracking-tight">Mini ERP</span>
+        <span className="text-[15px] font-semibold tracking-tight" style={{ color: '#f0ece3' }}>Mini ERP</span>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
         {sections.map((section) => (
           <div key={section.label}>
-            <p className="mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+            <p className="mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#3a3a3e' }}>
               {section.label}
             </p>
             <div className="space-y-0.5">
@@ -194,10 +194,10 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-white/5 px-4 py-3">
+      <div className="px-4 py-3" style={{ borderTop: '1px solid #232326' }}>
         <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <p className="text-[11px] text-slate-600">v2.0 · Phase 2 ML</p>
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <p className="text-[11px]" style={{ color: '#3a3a3e' }}>v2.0 · Phase 2 ML</p>
         </div>
       </div>
     </aside>

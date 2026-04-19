@@ -8,14 +8,14 @@ interface Props {
   className?: string
 }
 
-const variants: Record<Variant, string> = {
-  gray:   'bg-gray-100 text-gray-600 ring-1 ring-gray-200',
-  green:  'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60',
-  red:    'bg-red-50 text-red-600 ring-1 ring-red-200/60',
-  yellow: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60',
-  blue:   'bg-blue-50 text-blue-700 ring-1 ring-blue-200/60',
-  purple: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200/60',
-  orange: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200/60',
+const variantStyles: Record<Variant, React.CSSProperties> = {
+  gray:   { backgroundColor: '#222224', color: '#888884', border: '1px solid #2e2e32' },
+  green:  { backgroundColor: '#1a2a1a', color: '#7abf7a', border: '1px solid #2a4a2a' },
+  red:    { backgroundColor: '#2a1a1a', color: '#df9090', border: '1px solid #4a2020' },
+  yellow: { backgroundColor: '#2a2010', color: '#dfba80', border: '1px solid #504020' },
+  blue:   { backgroundColor: '#1a1a2a', color: '#8888df', border: '1px solid #2a2a50' },
+  purple: { backgroundColor: '#22102a', color: '#bf80df', border: '1px solid #42204a' },
+  orange: { backgroundColor: '#2a1a0a', color: '#d97757', border: '1px solid #4a3010' },
 }
 
 export function Badge({ children, variant = 'gray', className }: Props) {
@@ -23,9 +23,9 @@ export function Badge({ children, variant = 'gray', className }: Props) {
     <span
       className={clsx(
         'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
-        variants[variant],
         className,
       )}
+      style={variantStyles[variant]}
     >
       {children}
     </span>

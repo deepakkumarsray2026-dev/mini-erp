@@ -8,10 +8,10 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary:   'bg-blue-600 text-white hover:bg-blue-700 shadow-sm focus:ring-blue-500',
-  secondary: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 focus:ring-gray-300',
-  danger:    'bg-red-600 text-white hover:bg-red-700 shadow-sm focus:ring-red-500',
-  ghost:     'text-gray-600 hover:bg-gray-100 hover:text-gray-800 focus:ring-gray-300',
+  primary:   'text-white',
+  secondary: 'font-medium transition-colors',
+  danger:    'bg-red-700 text-white hover:bg-red-600 shadow-sm',
+  ghost:     'transition-colors',
 }
 
 const sizes = {
@@ -20,16 +20,46 @@ const sizes = {
   lg: 'px-5 py-2.5 text-sm',
 }
 
-export function Button({ variant = 'primary', size = 'md', loading, disabled, children, className, ...props }: Props) {
+export function Button({ variant = 'primary', size = 'md', loading, disabled, children, className, style, ...props }: Props) {
+  const variantStyle: React.CSSProperties =
+    variant === 'primary'
+      ? { backgroundColor: '#d97757', boxShadow: '0 1px 3px rgba(0,0,0,.3)' }
+      : variant === 'secondary'
+      ? { backgroundColor: '#1c1c1e', color: '#c4c0b8', border: '1px solid #2a2a2e' }
+      : variant === 'ghost'
+      ? { color: '#6b6b6b' }
+      : {}
+
   return (
     <button
       disabled={disabled || loading}
       className={clsx(
-        'inline-flex items-center gap-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center gap-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-[#131314] disabled:opacity-50 disabled:cursor-not-allowed',
+        variant === 'primary' && 'focus:ring-[#d97757]/40',
+        variant === 'secondary' && 'focus:ring-[#2a2a2e]',
+        variant === 'ghost' && 'focus:ring-[#2a2a2e]',
         variants[variant],
         sizes[size],
         className,
       )}
+      style={{ ...variantStyle, ...style }}
+      onMouseEnter={e => {
+        if (disabled || loading) return
+        if (variant === 'primary') e.currentTarget.style.opacity = '0.88'
+        if (variant === 'secondary') e.currentTarget.style.backgroundColor = '#222224'
+        if (variant === 'ghost') {
+          e.currentTarget.style.backgroundColor = '#222224'
+          e.currentTarget.style.color = '#f0ece3'
+        }
+      }}
+      onMouseLeave={e => {
+        if (variant === 'primary') e.currentTarget.style.opacity = '1'
+        if (variant === 'secondary') e.currentTarget.style.backgroundColor = '#1c1c1e'
+        if (variant === 'ghost') {
+          e.currentTarget.style.backgroundColor = 'transparent'
+          e.currentTarget.style.color = '#6b6b6b'
+        }
+      }}
       {...props}
     >
       {loading && <Spinner size="sm" />}
