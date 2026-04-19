@@ -269,6 +269,7 @@ function InsightsTab() {
 
   const attrition = useQuery({ queryKey: ['insight-attrition'], queryFn: () => aiService.getAttritionRisk(10) })
   const expenses  = useQuery({ queryKey: ['insight-expenses'],  queryFn: () => aiService.getExpenseViolations(10) })
+  const invoices  = useQuery({ queryKey: ['insight-invoices'],  queryFn: () => aiService.getInvoiceClassifications(10) })
   const payroll   = useQuery({ queryKey: ['insight-payroll'],   queryFn: () => aiService.getPayrollAnomalies(10) })
 
   return (
