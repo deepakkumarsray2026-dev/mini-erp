@@ -12,6 +12,7 @@ from app.core.middleware import request_middleware
 from app.api.v1 import auth
 from app.api.v1 import workforce, payroll, accounts_payable
 from app.api.v1 import expenses, procurement, general_ledger, admin
+from app.api.v1 import mlops
 
 
 @asynccontextmanager
@@ -66,8 +67,7 @@ app.include_router(expenses.router,         prefix="/api/v1/expenses",    tags=[
 app.include_router(procurement.router,      prefix="/api/v1/procurement", tags=["Procurement"])
 app.include_router(general_ledger.router,   prefix="/api/v1/gl",          tags=["General Ledger"])
 app.include_router(admin.router,            prefix="/api/v1/admin",       tags=["Admin"])
-# app.include_router(general_ledger.router,   prefix="/api/v1/gl",          tags=["GL"])
-# app.include_router(admin.router,            prefix="/api/v1/admin",       tags=["Admin"])
+app.include_router(mlops.router,            prefix="/api/v1/mlops",       tags=["MLOps"])
 
 
 @app.get("/api/v1/health", tags=["System"], include_in_schema=False)
@@ -86,5 +86,5 @@ async def app_info():
     return {
         "title":   settings.APP_TITLE,
         "version": settings.APP_VERSION,
-        "modules": ["workforce", "payroll", "accounts_payable", "expenses", "procurement", "general_ledger"],
+        "modules": ["workforce", "payroll", "accounts_payable", "expenses", "procurement", "general_ledger", "mlops"],
     }
