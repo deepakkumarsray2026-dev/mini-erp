@@ -216,6 +216,66 @@ def _train_isolation_forest(df: pd.DataFrame) -> dict[str, Any]:
     return metrics
 
 
+# ── Batch insight ─────────────────────────────────────────────────────────────
+
+
+def predict_all_top(limit: int = 10) -> list[dict[str, Any]]:
+    """Batch-score all expense lines; return top ``limit`` by violation probability."""
+    if not ARTIFACT_PATH.exists():
+        raise FileNotFoundError(f"[{MODEL_NAME}] Model artifact not found. Train first.")
+
+    from app.ml.features.expense_features import load_training_dataframe as _load
+    df = _load()
+    df = df.drop_duplicates(subset=["id"])
+    X = df[FEATURE_COLS].astype(float)
+
+    artifact = joblib.load(ARTIFACT_PATH)
+    if artifact["mode"] == "supervised":
+        probas = artifact["pipeline"].predict_proba(X)[:, 1]
+    else:
+        X_scaled = artifact["scaler"].transform(X)
+        scores = artifact["model"].decision_function(X_scaled)
+        probas = np.array([_score_to_probability(float(s)) for s in scores])
+
+    df = df.copy()
+    df["probability"] = probas
+    top_n = df.nlargest(limit, "probability")
+    line_ids = [str(i) for i in top_n["id"].tolist()]
+
+    from sqlalchemy import text as _text
+    from app.core.database import SyncSessionLocal
+    with SyncSessionLocal() as session:
+        rows = session.execute(_text("""
+            SELECT el.id::text, el.amount, el.expense_date,
+                   ec.name AS category_name,
+                   e.first_name || ' ' || e.last_name AS employee_name
+            FROM expenses.expense_lines el
+            JOIN expenses.expense_reports er   ON er.id = el.report_id
+            JOIN expenses.expense_categories ec ON ec.id = el.category_id
+            JOIN hcm.employees e               ON e.id = er.employee_id
+            WHERE el.id::text = ANY(:ids)
+        """), {"ids": line_ids}).fetchall()
+
+    info = {r[0]: {"amount": r[1], "expense_date": r[2],
+                   "category": r[3], "employee_name": r[4]} for r in rows}
+
+    results = []
+    for _, row in top_n.iterrows():
+        line = info.get(str(row["id"]), {})
+        prob = float(row["probability"])
+        results.append({
+            "expense_line_id": str(row["id"]),
+            "employee_name":   line.get("employee_name", ""),
+            "category":        line.get("category", ""),
+            "amount":          float(line.get("amount", 0)),
+            "expense_date":    str(line.get("expense_date", "")),
+            "probability":     round(prob, 4),
+            "risk_pct":        round(prob * 100, 1),
+            "prediction":      "violation" if prob >= 0.5 else "compliant",
+        })
+    return results
+
+
 # ── Inference ─────────────────────────────────────────────────────────────────
 
 

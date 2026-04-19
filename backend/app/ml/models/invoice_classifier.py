@@ -212,6 +212,81 @@ def train() -> dict[str, Any]:
     return metrics
 
 
+# ── Batch insight ─────────────────────────────────────────────────────────────
+
+
+def predict_all_top(limit: int = 10) -> list[dict[str, Any]]:
+    """Batch-score all categorised invoices; return top ``limit`` by confidence.
+
+    Also surfaces where the model's predicted category differs from the stored
+    category (is_match=False), which is useful for data-quality review.
+    """
+    if not ARTIFACT_PATH.exists():
+        raise FileNotFoundError(f"[{MODEL_NAME}] Model artifact not found. Train first.")
+
+    X_raw, y = load_training_dataframe()
+    if X_raw.empty:
+        return []
+
+    artifact = joblib.load(ARTIFACT_PATH)
+    pipeline: Pipeline = artifact["pipeline"]
+    tfidf_vectorizer = artifact["tfidf_vectorizer"]
+    label_encoder: LabelEncoder = artifact["label_encoder"]
+
+    X_numeric = X_raw[NUMERIC_FEATURE_COLS].astype(float)
+    tfidf_df, _ = build_tfidf_features(X_raw["description"], tfidf_vectorizer, fit=False)
+    X_combined = pd.concat(
+        [X_numeric.reset_index(drop=True), tfidf_df.reset_index(drop=True)], axis=1
+    )
+
+    y_pred_enc = pipeline.predict(X_combined)
+    y_proba    = pipeline.predict_proba(X_combined)
+    predicted_categories = label_encoder.inverse_transform(y_pred_enc)
+    confidences = y_proba.max(axis=1)
+
+    ids = X_raw["id"].reset_index(drop=True)
+    result_df = pd.DataFrame({
+        "id":                 ids,
+        "predicted_category": predicted_categories,
+        "confidence":         confidences,
+        "actual_category":    y.reset_index(drop=True),
+    })
+    top_n = result_df.nlargest(limit, "confidence")
+    inv_ids = [str(i) for i in top_n["id"].tolist()]
+
+    from sqlalchemy import text as _text
+    from app.core.database import SyncSessionLocal
+    with SyncSessionLocal() as session:
+        rows = session.execute(_text("""
+            SELECT i.id::text, i.invoice_number, i.total_amount, v.name AS vendor_name
+            FROM ap.invoices i
+            JOIN ap.vendors v ON v.id = i.vendor_id
+            WHERE i.id::text = ANY(:ids)
+        """), {"ids": inv_ids}).fetchall()
+
+    info = {r[0]: {"invoice_number": r[1], "total_amount": r[2],
+                   "vendor_name": r[3]} for r in rows}
+
+    results = []
+    for _, row in top_n.iterrows():
+        inv = info.get(str(row["id"]), {})
+        conf = float(row["confidence"])
+        actual = str(row["actual_category"])
+        predicted = str(row["predicted_category"])
+        results.append({
+            "invoice_id":         str(row["id"]),
+            "invoice_number":     inv.get("invoice_number", ""),
+            "vendor_name":        inv.get("vendor_name", ""),
+            "total_amount":       float(inv.get("total_amount", 0)),
+            "actual_category":    actual,
+            "predicted_category": predicted,
+            "confidence":         round(conf, 4),
+            "confidence_pct":     round(conf * 100, 1),
+            "is_match":           actual.lower() == predicted.lower(),
+        })
+    return results
+
+
 # ── Inference ─────────────────────────────────────────────────────────────────
 
 

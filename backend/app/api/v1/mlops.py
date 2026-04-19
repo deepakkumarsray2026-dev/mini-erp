@@ -420,6 +420,66 @@ async def predict_invoice_category(
     )
 
 
+# ── Batch insights ────────────────────────────────────────────────────────────
+
+
+@router.get(
+    "/insights/attrition-risk",
+    summary="Top N active employees by attrition risk",
+    response_model=list[dict],
+)
+async def attrition_risk_insight(
+    limit: int = Query(10, ge=1, le=500),
+    _=Depends(can_read(ModuleName.AI)),
+):
+    try:
+        from app.ml.models.attrition_predictor import predict_all_active
+        return await _run_in_thread(predict_all_active, limit)
+    except FileNotFoundError:
+        raise _model_not_trained("attrition_predictor")
+    except Exception as exc:
+        logger.error(f"[mlops] attrition insight error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.get(
+    "/insights/expense-violations",
+    summary="Top N expense lines by violation probability",
+    response_model=list[dict],
+)
+async def expense_violation_insight(
+    limit: int = Query(10, ge=1, le=500),
+    _=Depends(can_read(ModuleName.AI)),
+):
+    try:
+        from app.ml.models.expense_violation_detector import predict_all_top
+        return await _run_in_thread(predict_all_top, limit)
+    except FileNotFoundError:
+        raise _model_not_trained("expense_violation")
+    except Exception as exc:
+        logger.error(f"[mlops] expense insight error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.get(
+    "/insights/invoice-classifications",
+    summary="Top N invoices by classification confidence",
+    response_model=list[dict],
+)
+async def invoice_classification_insight(
+    limit: int = Query(10, ge=1, le=500),
+    _=Depends(can_read(ModuleName.AI)),
+):
+    try:
+        from app.ml.models.invoice_classifier import predict_all_top
+        return await _run_in_thread(predict_all_top, limit)
+    except FileNotFoundError:
+        raise _model_not_trained("invoice_classifier")
+    except Exception as exc:
+        logger.error(f"[mlops] invoice insight error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 # ── Audit log & jobs ──────────────────────────────────────────────────────────
 
 
