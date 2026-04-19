@@ -32,6 +32,16 @@ CATEGORIES = [
 def load_training_dataframe() -> tuple[pd.DataFrame, pd.Series]:
     """Returns (X numeric+text, y labels)."""
     query = text("""
+        WITH vendor_counts AS (
+            SELECT vendor_id, COUNT(*) AS vendor_invoice_count
+            FROM ap.invoices
+            GROUP BY vendor_id
+        ),
+        line_stats AS (
+            SELECT invoice_id, COUNT(*) AS line_count, AVG(amount) AS avg_line_amount
+            FROM ap.invoice_lines
+            GROUP BY invoice_id
+        )
         SELECT
             i.id,
             i.total_amount,
@@ -40,17 +50,15 @@ def load_training_dataframe() -> tuple[pd.DataFrame, pd.Series]:
             i.category,
             i.invoice_date,
             i.due_date,
-            COUNT(il.id)      AS line_count,
-            AVG(il.amount)    AS avg_line_amount,
+            COALESCE(ls.line_count, 0)          AS line_count,
+            COALESCE(ls.avg_line_amount, 0)     AS avg_line_amount,
             v.payment_terms_days,
-            COUNT(i2.id) OVER (PARTITION BY i.vendor_id) AS vendor_invoice_count
+            COALESCE(vc.vendor_invoice_count, 1) AS vendor_invoice_count
         FROM ap.invoices i
-        JOIN ap.vendors v          ON v.id = i.vendor_id
-        LEFT JOIN ap.invoice_lines il ON il.invoice_id = i.id
-        LEFT JOIN ap.invoices i2   ON i2.vendor_id = i.vendor_id
+        JOIN ap.vendors v              ON v.id = i.vendor_id
+        LEFT JOIN line_stats ls        ON ls.invoice_id = i.id
+        LEFT JOIN vendor_counts vc     ON vc.vendor_id = i.vendor_id
         WHERE i.category IS NOT NULL
-        GROUP BY i.id, i.total_amount, i.tax_amount, i.description, i.category,
-                 i.invoice_date, i.due_date, v.payment_terms_days, i.vendor_id
     """)
 
     with SyncSessionLocal() as session:

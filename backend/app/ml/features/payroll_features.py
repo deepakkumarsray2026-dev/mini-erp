@@ -75,7 +75,8 @@ def load_training_dataframe() -> pd.DataFrame:
         (df["gross_pay"] - prev_gross) / prev_gross.replace(0, np.nan)
     ).fillna(0.0)
 
-    type_map = {"full_time": 0, "part_time": 1, "contract": 2, "intern": 3}
+    type_map = {"full_time": 0, "part_time": 1, "contract": 2, "intern": 3,
+                "FULL_TIME": 0, "PART_TIME": 1, "CONTRACT": 2, "INTERN": 3}
     df["employment_type_encoded"] = df["employment_type"].map(type_map).fillna(0).astype(int)
 
     return df[FEATURE_COLS + [TARGET_COL, "id"]]
@@ -91,7 +92,8 @@ def build_inference_vector(payslip_dict: dict, employee_dict: dict, prev_gross: 
     salary  = float(employee_dict.get("base_salary", gross * 12))
     monthly = salary / 12.0 or 1.0
 
-    type_map = {"full_time": 0, "part_time": 1, "contract": 2, "intern": 3}
+    type_map = {"full_time": 0, "part_time": 1, "contract": 2, "intern": 3,
+                "FULL_TIME": 0, "PART_TIME": 1, "CONTRACT": 2, "INTERN": 3}
 
     row = {
         "gross_pay":               gross,

@@ -83,11 +83,12 @@ def load_training_dataframe() -> pd.DataFrame:
     df["is_manager"] = df["id"].isin(manager_ids).astype(int)
 
     # employment type encoding
-    type_map = {"full_time": 0, "part_time": 1, "contract": 2, "intern": 3}
+    type_map = {"full_time": 0, "part_time": 1, "contract": 2, "intern": 3,
+                "FULL_TIME": 0, "PART_TIME": 1, "CONTRACT": 2, "INTERN": 3}
     df["employment_type_encoded"] = df["employment_type"].map(type_map).fillna(0).astype(int)
 
     # target
-    df[TARGET_COL] = (df["employment_status"] == "terminated").astype(int)
+    df[TARGET_COL] = (df["employment_status"].str.upper() == "TERMINATED").astype(int)
 
     # fill nulls with medians
     for col in ["satisfaction_score", "performance_rating", "overtime_monthly_avg", "training_hours_ytd"]:
@@ -111,8 +112,9 @@ def build_inference_vector(employee_dict: dict) -> pd.DataFrame:
     salary_max = float(employee_dict.get("salary_max", salary or 1))
     grade_ratio = salary / salary_max if salary_max > 0 else 1.0
 
-    type_map = {"full_time": 0, "part_time": 1, "contract": 2, "intern": 3}
-    etype_enc = type_map.get(employee_dict.get("employment_type", "full_time"), 0)
+    type_map = {"full_time": 0, "part_time": 1, "contract": 2, "intern": 3,
+                "FULL_TIME": 0, "PART_TIME": 1, "CONTRACT": 2, "INTERN": 3}
+    etype_enc = type_map.get(employee_dict.get("employment_type", "FULL_TIME"), 0)
 
     row = {
         "tenure_years":           tenure,
