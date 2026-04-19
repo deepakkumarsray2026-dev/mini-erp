@@ -70,12 +70,11 @@ function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void 
 
 // ── View All Modal ────────────────────────────────────────────────────────────
 
-type ModalType = 'attrition' | 'expenses' | 'invoices' | 'payroll'
+type ModalType = 'attrition' | 'expenses' | 'payroll'
 
 const MODAL_META: Record<ModalType, { title: string; fetchFn: (limit: number) => Promise<any[]> }> = {
   attrition: { title: 'All High Attrition Risk Employees  (> 60%)', fetchFn: (l) => aiService.getAttritionRisk(l) },
   expenses:  { title: 'All High Violation Risk Expense Lines (> 60%)', fetchFn: (l) => aiService.getExpenseViolations(l) },
-  invoices:  { title: 'All High-Confidence Invoice Classifications (> 60%)', fetchFn: (l) => aiService.getInvoiceClassifications(l) },
   payroll:   { title: 'All Anomalous Payslips (> 60%)', fetchFn: (l) => aiService.getPayrollAnomalies(l) },
 }
 
@@ -90,7 +89,6 @@ function ViewAllModal({ type, onClose }: { type: ModalType; onClose: () => void 
   const rows: any[] = (data ?? []).filter((r: any) => {
     if (type === 'attrition') return r.risk_pct > 60
     if (type === 'expenses')  return r.risk_pct > 60
-    if (type === 'invoices')  return r.confidence_pct > 60
     if (type === 'payroll')   return r.risk_pct > 60
     return false
   })
@@ -161,40 +159,6 @@ function ViewAllModal({ type, onClose }: { type: ModalType; onClose: () => void 
                     <td className="px-4 py-3 text-sm font-mono">£{r.amount.toLocaleString()}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{r.expense_date}</td>
                     <td className="px-4 py-3"><RiskBar value={r.risk_pct} threshold={60} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : type === 'invoices' ? (
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  {['#', 'Invoice', 'Vendor', 'Amount', 'Actual Category', 'Predicted', 'Confidence', 'Match'].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {rows.map((r: any, i: number) => (
-                  <tr key={r.invoice_id} className={!r.is_match ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-gray-50'}>
-                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">{i + 1}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-blue-600">{r.invoice_number}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{r.vendor_name}</td>
-                    <td className="px-4 py-3 text-sm font-mono">£{r.total_amount.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-xs text-gray-600">{r.actual_category}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        r.is_match ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                      }`}>{r.predicted_category}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <RiskBar value={r.confidence_pct} threshold={101} />
-                    </td>
-                    <td className="px-4 py-3">
-                      {r.is_match
-                        ? <CheckCircle className="h-4 w-4 text-emerald-500" />
-                        : <AlertTriangle className="h-4 w-4 text-amber-500" />}
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -305,7 +269,6 @@ function InsightsTab() {
 
   const attrition = useQuery({ queryKey: ['insight-attrition'], queryFn: () => aiService.getAttritionRisk(10) })
   const expenses  = useQuery({ queryKey: ['insight-expenses'],  queryFn: () => aiService.getExpenseViolations(10) })
-  const invoices  = useQuery({ queryKey: ['insight-invoices'],  queryFn: () => aiService.getInvoiceClassifications(10) })
   const payroll   = useQuery({ queryKey: ['insight-payroll'],   queryFn: () => aiService.getPayrollAnomalies(10) })
 
   return (
@@ -315,7 +278,7 @@ function InsightsTab() {
 
       {/* Attrition Risk */}
       <section>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-5 w-5 text-red-500" />
             <h2 className="text-base font-semibold text-gray-900">Top 10 — Attrition Risk</h2>
@@ -330,6 +293,9 @@ function InsightsTab() {
             </button>
           </div>
         </div>
+        <p className="text-xs text-gray-500 mb-4">
+          Predicts the likelihood of an employee leaving the organisation, based on tenure, performance rating, satisfaction score, salary-to-band ratio, and overtime patterns. Scores above 60% warrant a retention conversation.
+        </p>
         {attrition.isLoading ? (
           <div className="text-sm text-gray-400 py-6 text-center">Scoring employees…</div>
         ) : attrition.isError ? (
@@ -365,7 +331,7 @@ function InsightsTab() {
 
       {/* Expense Violations */}
       <section>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
             <h2 className="text-base font-semibold text-gray-900">Top 10 — Expense Violation Risk</h2>
@@ -380,6 +346,9 @@ function InsightsTab() {
             </button>
           </div>
         </div>
+        <p className="text-xs text-gray-500 mb-4">
+          Flags expense lines that deviate from policy limits and historical spend norms. The model learns from previously marked violations and detects unusual amounts, out-of-policy categories, and patterns linked to high employee violation rates. Scores above 60% should be reviewed before reimbursement.
+        </p>
         {expenses.isLoading ? (
           <div className="text-sm text-gray-400 py-6 text-center">Scoring expense lines…</div>
         ) : expenses.isError ? (
@@ -416,21 +385,20 @@ function InsightsTab() {
 
       {/* Invoice Classifications */}
       <section>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-blue-500" />
             <h2 className="text-base font-semibold text-gray-900">Top 10 — Invoice Classifications</h2>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={() => setModal('invoices')}
-              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">
-              <ExternalLink className="h-3 w-3" /> View All &gt; 60%
-            </button>
             <button onClick={() => invoices.refetch()} className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1">
               <RefreshCw className="h-3 w-3" /> Refresh
             </button>
           </div>
         </div>
+        <p className="text-xs text-gray-500 mb-4">
+          Automatically classifies each invoice into a spend category using TF-IDF text features from the invoice description combined with numeric signals. Mismatches between predicted and actual category are highlighted in amber and may indicate miscoding or vendor fraud.
+        </p>
         {invoices.isLoading ? (
           <div className="text-sm text-gray-400 py-6 text-center">Classifying invoices…</div>
         ) : invoices.isError ? (
@@ -477,7 +445,7 @@ function InsightsTab() {
 
       {/* Payroll Anomalies */}
       <section>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-purple-500" />
             <h2 className="text-base font-semibold text-gray-900">Top 10 — Payroll Anomalies</h2>
@@ -492,6 +460,9 @@ function InsightsTab() {
             </button>
           </div>
         </div>
+        <p className="text-xs text-gray-500 mb-4">
+          Detects payslips where gross pay, net pay, or period-over-period deltas fall outside expected ranges for the employee's role and pay group. Scores above 60% indicate statistically unusual payroll runs that should be reviewed before finalisation.
+        </p>
         {payroll.isLoading ? (
           <div className="text-sm text-gray-400 py-6 text-center">Scoring payslips…</div>
         ) : payroll.isError ? (
