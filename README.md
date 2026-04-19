@@ -35,6 +35,116 @@ A full-stack Enterprise Resource Planning platform built as a portfolio project 
 
 ---
 
+## Architecture
+
+### Current State — Phase 2 (Machine Learning)
+
+```mermaid
+graph TB
+    subgraph Client["Browser / Client"]
+        FE["React 18 + TypeScript\nVite · Tailwind CSS\nZustand · TanStack Query"]
+    end
+
+    subgraph Gateway["Gateway"]
+        NG["Nginx\n(reverse proxy)"]
+    end
+
+    subgraph Backend["FastAPI Backend (Python 3.11)"]
+        API["REST API\n/api/v1/*"]
+        AUTH["JWT + RBAC\nauth.py"]
+        SVC["Business Logic\nservices/"]
+        ML["ML Layer\nscikit-learn · joblib\nSMOTE · TF-IDF"]
+    end
+
+    subgraph Storage["Storage"]
+        PG["PostgreSQL 15\n8 schemas"]
+        RD["Redis 7\ncache / queue"]
+        FS["File System\n/app/models_store\n.joblib artifacts"]
+    end
+
+    subgraph Workers["Background Workers"]
+        CW["Celery Worker\nasync tasks"]
+    end
+
+    FE -->|HTTP| NG
+    NG -->|proxy :8000| API
+    NG -->|proxy :3000| FE
+    API --> AUTH
+    API --> SVC
+    API --> ML
+    SVC --> PG
+    ML --> PG
+    ML --> FS
+    API --> RD
+    RD --> CW
+    CW --> PG
+
+    style Client fill:#dbeafe,stroke:#3b82f6
+    style Backend fill:#dcfce7,stroke:#16a34a
+    style Storage fill:#fef9c3,stroke:#ca8a04
+    style Workers fill:#fce7f3,stroke:#db2777
+    style Gateway fill:#f3f4f6,stroke:#6b7280
+```
+
+### Future State — Phase 6 (Agentic AI Platform)
+
+```mermaid
+graph TB
+    subgraph Client["Browser / Client"]
+        FE["React Frontend\n+ Chat UI\n+ Agent Console"]
+    end
+
+    subgraph Gateway["Gateway"]
+        NG["Nginx + Auth Middleware"]
+    end
+
+    subgraph Backend["FastAPI Backend"]
+        API["REST API\n/api/v1/*"]
+        ML["Phase 2 — ML\nAttrition · Anomaly\nViolation · Classifier"]
+        DL["Phase 3 — Deep Learning\nLSTM Budget Forecaster\nCNN Invoice Classifier"]
+        RAG["Phase 4 — RAG + LLM\nDuplicate Invoice\nFinance Chat · OCR"]
+        AGT["Phase 5 — AI Agents\nInvoice Agent\nExpense Audit Agent\nOnboarding Agent"]
+        NET["Phase 6 — Agentic Networks\nFinancial Close Network\nWorkforce Planning Network"]
+    end
+
+    subgraph Storage["Storage"]
+        PG["PostgreSQL 15"]
+        RD["Redis 7"]
+        FS["Model Store\n.joblib / .pt / .onnx"]
+        VDB["Vector DB\n(pgvector / Chroma)"]
+        OBJ["Object Store\nInvoice images · PDFs"]
+    end
+
+    subgraph LLM["LLM / Embeddings"]
+        LLM_API["Anthropic Claude\n/ OpenAI API"]
+    end
+
+    subgraph Workers["Workers"]
+        CW["Celery\nasync tasks"]
+        LG["LangGraph\nagent runtime"]
+    end
+
+    FE --> NG --> API
+    API --> ML & DL & RAG & AGT & NET
+    ML & DL --> FS
+    RAG --> VDB & OBJ & LLM_API
+    AGT --> LG & LLM_API
+    NET --> LG & LLM_API
+    API --> RD --> CW
+    CW & LG --> PG
+
+    style Client fill:#dbeafe,stroke:#3b82f6
+    style Backend fill:#dcfce7,stroke:#16a34a
+    style Storage fill:#fef9c3,stroke:#ca8a04
+    style Workers fill:#fce7f3,stroke:#db2777
+    style LLM fill:#ede9fe,stroke:#7c3aed
+    style Gateway fill:#f3f4f6,stroke:#6b7280
+```
+
+> **Note:** Both diagrams are updated as each phase is completed.
+
+---
+
 ## Repository Structure
 
 ```
@@ -199,6 +309,7 @@ Valid `model_type` values: `attrition_predictor`, `expense_violation`, `payroll_
 ```
 GET /api/v1/mlops/insights/attrition-risk?limit=10
 GET /api/v1/mlops/insights/expense-violations?limit=10
+GET /api/v1/mlops/insights/payroll-anomalies?limit=10
 GET /api/v1/mlops/insights/invoice-classifications?limit=10
 ```
 
@@ -237,7 +348,7 @@ GET  /api/v1/mlops/jobs                            # Training job history
 
 ### AI Dashboard (`/ai`)
 
-- **Insights tab** — Top 10 employees by attrition risk, top 10 expense violations, top 10 invoice classifications. Rows exceeding 60% threshold highlighted in red. Each section has a "View All > 60%" modal.
+- **Insights tab** — Top 10 by attrition risk, expense violations, payroll anomalies, and invoice classifications. Rows exceeding 60% threshold highlighted in red. Each section has a "View All > 60%" modal.
 - **Model Registry tab** — Trained model cards showing algorithm, version, training date, and evaluation metrics (accuracy, ROC-AUC, F1, CV-AUC).
 - **Prediction Log tab** — Paginated audit trail of every inference call.
 

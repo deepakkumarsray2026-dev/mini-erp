@@ -480,6 +480,25 @@ async def invoice_classification_insight(
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+@router.get(
+    "/insights/payroll-anomalies",
+    summary="Top N payslips by anomaly probability",
+    response_model=list[dict],
+)
+async def payroll_anomaly_insight(
+    limit: int = Query(10, ge=1, le=500),
+    _=Depends(can_read(ModuleName.AI)),
+):
+    try:
+        from app.ml.models.payroll_anomaly_detector import predict_all_top
+        return await _run_in_thread(predict_all_top, limit)
+    except FileNotFoundError:
+        raise _model_not_trained("payroll_anomaly")
+    except Exception as exc:
+        logger.error(f"[mlops] payroll anomaly insight error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 # ── Audit log & jobs ──────────────────────────────────────────────────────────
 
 

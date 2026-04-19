@@ -70,12 +70,13 @@ function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void 
 
 // ── View All Modal ────────────────────────────────────────────────────────────
 
-type ModalType = 'attrition' | 'expenses' | 'invoices'
+type ModalType = 'attrition' | 'expenses' | 'invoices' | 'payroll'
 
 const MODAL_META: Record<ModalType, { title: string; fetchFn: (limit: number) => Promise<any[]> }> = {
   attrition: { title: 'All High Attrition Risk Employees  (> 60%)', fetchFn: (l) => aiService.getAttritionRisk(l) },
   expenses:  { title: 'All High Violation Risk Expense Lines (> 60%)', fetchFn: (l) => aiService.getExpenseViolations(l) },
   invoices:  { title: 'All High-Confidence Invoice Classifications (> 60%)', fetchFn: (l) => aiService.getInvoiceClassifications(l) },
+  payroll:   { title: 'All Anomalous Payslips (> 60%)', fetchFn: (l) => aiService.getPayrollAnomalies(l) },
 }
 
 function ViewAllModal({ type, onClose }: { type: ModalType; onClose: () => void }) {
@@ -90,6 +91,7 @@ function ViewAllModal({ type, onClose }: { type: ModalType; onClose: () => void 
     if (type === 'attrition') return r.risk_pct > 60
     if (type === 'expenses')  return r.risk_pct > 60
     if (type === 'invoices')  return r.confidence_pct > 60
+    if (type === 'payroll')   return r.risk_pct > 60
     return false
   })
 
@@ -163,7 +165,7 @@ function ViewAllModal({ type, onClose }: { type: ModalType; onClose: () => void 
                 ))}
               </tbody>
             </table>
-          ) : (
+          ) : type === 'invoices' ? (
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
@@ -193,6 +195,30 @@ function ViewAllModal({ type, onClose }: { type: ModalType; onClose: () => void 
                         ? <CheckCircle className="h-4 w-4 text-emerald-500" />
                         : <AlertTriangle className="h-4 w-4 text-amber-500" />}
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            /* payroll */
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50 rounded-t-xl">
+                <tr>
+                  {['#', 'Employee', 'ID', 'Gross Pay', 'Net Pay', 'Pay Period', 'Anomaly Risk'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {rows.map((r: any, i: number) => (
+                  <tr key={r.payslip_id} className="bg-red-50 hover:bg-red-100 transition-colors">
+                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">{i + 1}</td>
+                    <td className="px-4 py-3 font-medium text-red-700">{r.full_name}</td>
+                    <td className="px-4 py-3 text-xs font-mono text-gray-500">{r.employee_number}</td>
+                    <td className="px-4 py-3 text-sm font-mono">£{r.gross_pay.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm font-mono">£{r.net_pay.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{r.pay_period_start} → {r.pay_period_end}</td>
+                    <td className="px-4 py-3"><RiskBar value={r.risk_pct} threshold={60} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -280,6 +306,7 @@ function InsightsTab() {
   const attrition = useQuery({ queryKey: ['insight-attrition'], queryFn: () => aiService.getAttritionRisk(10) })
   const expenses  = useQuery({ queryKey: ['insight-expenses'],  queryFn: () => aiService.getExpenseViolations(10) })
   const invoices  = useQuery({ queryKey: ['insight-invoices'],  queryFn: () => aiService.getInvoiceClassifications(10) })
+  const payroll   = useQuery({ queryKey: ['insight-payroll'],   queryFn: () => aiService.getPayrollAnomalies(10) })
 
   return (
     <>
@@ -440,6 +467,60 @@ function InsightsTab() {
                     <td className="px-4 py-3">
                       <RiskBadge value={inv.confidence_pct} threshold={101} />
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Payroll Anomalies */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-purple-500" />
+            <h2 className="text-base font-semibold text-gray-900">Top 10 — Payroll Anomalies</h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setModal('payroll')}
+              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">
+              <ExternalLink className="h-3 w-3" /> View All &gt; 60%
+            </button>
+            <button onClick={() => payroll.refetch()} className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1">
+              <RefreshCw className="h-3 w-3" /> Refresh
+            </button>
+          </div>
+        </div>
+        {payroll.isLoading ? (
+          <div className="text-sm text-gray-400 py-6 text-center">Scoring payslips…</div>
+        ) : payroll.isError ? (
+          <div className="text-sm text-red-500 py-4">Model not trained — train payroll_anomaly first.</div>
+        ) : (
+          <div className="overflow-hidden border border-gray-200 rounded-xl">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">#</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Employee</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Gross Pay</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Net Pay</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Pay Period</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide w-40">Anomaly Risk</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {(payroll.data ?? []).map((ps: any, i: number) => (
+                  <tr key={ps.payslip_id} className={ps.risk_pct >= 60 ? 'bg-red-50' : 'hover:bg-gray-50'}>
+                    <td className="px-4 py-3 text-gray-400 text-xs font-mono">{i + 1}</td>
+                    <td className="px-4 py-3">
+                      <p className={`font-medium ${ps.risk_pct >= 60 ? 'text-red-700' : 'text-gray-900'}`}>{ps.full_name}</p>
+                      <p className="text-xs text-gray-400">{ps.employee_number}</p>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-mono">£{ps.gross_pay.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm font-mono">£{ps.net_pay.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{ps.pay_period_start} → {ps.pay_period_end}</td>
+                    <td className="px-4 py-3"><RiskBar value={ps.risk_pct} threshold={60} /></td>
                   </tr>
                 ))}
               </tbody>
