@@ -96,6 +96,8 @@ def predict(employee_dict: dict) -> dict:
     if not ARTIFACT_PATH.exists():
         raise FileNotFoundError(f"Model not trained yet: {ARTIFACT_PATH}")
 
+    import time
+    t0       = time.monotonic()
     pipeline = joblib.load(ARTIFACT_PATH)
     X        = build_inference_vector(employee_dict).astype(float)
     proba    = pipeline.predict_proba(X)[0, 1]
@@ -110,4 +112,5 @@ def predict(employee_dict: dict) -> dict:
         "probability": round(float(proba), 4),
         "risk_score":  round(float(proba), 4),
         "top_features": [{"feature": f, "importance": round(float(v), 4)} for f, v in top_k],
+        "latency_ms":  round((time.monotonic() - t0) * 1000, 2),
     }
