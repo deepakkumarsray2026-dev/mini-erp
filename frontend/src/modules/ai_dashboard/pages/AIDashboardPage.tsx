@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Brain, TrendingUp, ClipboardList, RefreshCw, AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react'
+import { Brain, TrendingUp, ClipboardList, RefreshCw, AlertTriangle, CheckCircle, ShieldAlert, X, ExternalLink } from 'lucide-react'
 import { aiService } from '../../../services/ai.service'
 import { PageHeader } from '../../../components/layout/PageHeader'
 import { format } from 'date-fns'
@@ -64,6 +64,142 @@ function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void 
           {t.icon}{t.label}
         </button>
       ))}
+    </div>
+  )
+}
+
+// ── View All Modal ────────────────────────────────────────────────────────────
+
+type ModalType = 'attrition' | 'expenses' | 'invoices'
+
+const MODAL_META: Record<ModalType, { title: string; fetchFn: (limit: number) => Promise<any[]> }> = {
+  attrition: { title: 'All High Attrition Risk Employees  (> 60%)', fetchFn: (l) => aiService.getAttritionRisk(l) },
+  expenses:  { title: 'All High Violation Risk Expense Lines (> 60%)', fetchFn: (l) => aiService.getExpenseViolations(l) },
+  invoices:  { title: 'All High-Confidence Invoice Classifications (> 60%)', fetchFn: (l) => aiService.getInvoiceClassifications(l) },
+}
+
+function ViewAllModal({ type, onClose }: { type: ModalType; onClose: () => void }) {
+  const meta = MODAL_META[type]
+  const { data, isLoading } = useQuery({
+    queryKey: ['view-all', type],
+    queryFn: () => meta.fetchFn(500),
+    staleTime: 60_000,
+  })
+
+  const rows: any[] = (data ?? []).filter((r: any) => {
+    if (type === 'attrition') return r.risk_pct > 60
+    if (type === 'expenses')  return r.risk_pct > 60
+    if (type === 'invoices')  return r.confidence_pct > 60
+    return false
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-16 px-4 pb-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            <h2 className="font-semibold text-gray-900">{meta.title}</h2>
+            {!isLoading && (
+              <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-semibold">
+                {rows.length} record{rows.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6">
+          {isLoading ? (
+            <div className="py-12 text-center text-sm text-gray-400">Loading all records…</div>
+          ) : rows.length === 0 ? (
+            <div className="py-12 text-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl">
+              No records exceed the 60% threshold.
+            </div>
+          ) : type === 'attrition' ? (
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50 rounded-t-xl">
+                <tr>
+                  {['#', 'Employee', 'ID', 'Department', 'Attrition Risk'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {rows.map((r: any, i: number) => (
+                  <tr key={r.employee_id} className="bg-red-50 hover:bg-red-100 transition-colors">
+                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">{i + 1}</td>
+                    <td className="px-4 py-3 font-medium text-red-700">{r.full_name}</td>
+                    <td className="px-4 py-3 text-xs font-mono text-gray-500">{r.employee_number}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{r.department || '—'}</td>
+                    <td className="px-4 py-3"><RiskBar value={r.risk_pct} threshold={60} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : type === 'expenses' ? (
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['#', 'Employee', 'Category', 'Amount', 'Date', 'Violation Risk'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {rows.map((r: any, i: number) => (
+                  <tr key={r.expense_line_id} className="bg-red-50 hover:bg-red-100 transition-colors">
+                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">{i + 1}</td>
+                    <td className="px-4 py-3 font-medium text-red-700">{r.employee_name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{r.category}</td>
+                    <td className="px-4 py-3 text-sm font-mono">£{r.amount.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{r.expense_date}</td>
+                    <td className="px-4 py-3"><RiskBar value={r.risk_pct} threshold={60} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['#', 'Invoice', 'Vendor', 'Amount', 'Actual Category', 'Predicted', 'Confidence', 'Match'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {rows.map((r: any, i: number) => (
+                  <tr key={r.invoice_id} className={!r.is_match ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-gray-50'}>
+                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">{i + 1}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-blue-600">{r.invoice_number}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{r.vendor_name}</td>
+                    <td className="px-4 py-3 text-sm font-mono">£{r.total_amount.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-xs text-gray-600">{r.actual_category}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        r.is_match ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                      }`}>{r.predicted_category}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <RiskBar value={r.confidence_pct} threshold={101} />
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.is_match
+                        ? <CheckCircle className="h-4 w-4 text-emerald-500" />
+                        : <AlertTriangle className="h-4 w-4 text-amber-500" />}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -139,11 +275,15 @@ function ModelsTab() {
 // ── Insights Tab ──────────────────────────────────────────────────────────────
 
 function InsightsTab() {
+  const [modal, setModal] = useState<ModalType | null>(null)
+
   const attrition = useQuery({ queryKey: ['insight-attrition'], queryFn: () => aiService.getAttritionRisk(10) })
   const expenses  = useQuery({ queryKey: ['insight-expenses'],  queryFn: () => aiService.getExpenseViolations(10) })
   const invoices  = useQuery({ queryKey: ['insight-invoices'],  queryFn: () => aiService.getInvoiceClassifications(10) })
 
   return (
+    <>
+    {modal && <ViewAllModal type={modal} onClose={() => setModal(null)} />}
     <div className="space-y-10">
 
       {/* Attrition Risk */}
@@ -153,9 +293,15 @@ function InsightsTab() {
             <ShieldAlert className="h-5 w-5 text-red-500" />
             <h2 className="text-base font-semibold text-gray-900">Top 10 — Attrition Risk</h2>
           </div>
-          <button onClick={() => attrition.refetch()} className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1">
-            <RefreshCw className="h-3 w-3" /> Refresh
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setModal('attrition')}
+              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">
+              <ExternalLink className="h-3 w-3" /> View All &gt; 60%
+            </button>
+            <button onClick={() => attrition.refetch()} className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1">
+              <RefreshCw className="h-3 w-3" /> Refresh
+            </button>
+          </div>
         </div>
         {attrition.isLoading ? (
           <div className="text-sm text-gray-400 py-6 text-center">Scoring employees…</div>
@@ -197,9 +343,15 @@ function InsightsTab() {
             <AlertTriangle className="h-5 w-5 text-amber-500" />
             <h2 className="text-base font-semibold text-gray-900">Top 10 — Expense Violation Risk</h2>
           </div>
-          <button onClick={() => expenses.refetch()} className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1">
-            <RefreshCw className="h-3 w-3" /> Refresh
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setModal('expenses')}
+              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">
+              <ExternalLink className="h-3 w-3" /> View All &gt; 60%
+            </button>
+            <button onClick={() => expenses.refetch()} className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1">
+              <RefreshCw className="h-3 w-3" /> Refresh
+            </button>
+          </div>
         </div>
         {expenses.isLoading ? (
           <div className="text-sm text-gray-400 py-6 text-center">Scoring expense lines…</div>
@@ -242,9 +394,15 @@ function InsightsTab() {
             <Brain className="h-5 w-5 text-blue-500" />
             <h2 className="text-base font-semibold text-gray-900">Top 10 — Invoice Classifications</h2>
           </div>
-          <button onClick={() => invoices.refetch()} className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1">
-            <RefreshCw className="h-3 w-3" /> Refresh
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setModal('invoices')}
+              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">
+              <ExternalLink className="h-3 w-3" /> View All &gt; 60%
+            </button>
+            <button onClick={() => invoices.refetch()} className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1">
+              <RefreshCw className="h-3 w-3" /> Refresh
+            </button>
+          </div>
         </div>
         {invoices.isLoading ? (
           <div className="text-sm text-gray-400 py-6 text-center">Classifying invoices…</div>
@@ -291,6 +449,7 @@ function InsightsTab() {
       </section>
 
     </div>
+    </>
   )
 }
 
