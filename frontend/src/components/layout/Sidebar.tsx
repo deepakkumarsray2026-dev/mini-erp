@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import {
   LayoutDashboard, Users, Building2, DollarSign, Receipt,
   ShoppingCart, BookOpen, Settings, ChevronDown, ChevronRight,
-  Briefcase, FileText, CreditCard, TrendingUp,
+  Briefcase, FileText, CreditCard, TrendingUp, Brain,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -64,6 +64,7 @@ const nav: NavItem[] = [
       { label: 'Users', href: '/admin/users' },
     ],
   },
+  { label: 'AI / MLOps', icon: <Brain className="h-4 w-4" />, href: '/ai' },
 ]
 
 function NavGroup({ item }: { item: NavItem }) {
@@ -129,7 +130,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="border-t border-slate-700 px-3 py-3">
-        <p className="text-xs text-slate-500 text-center">v1.0 · Phase 1</p>
+        <p className="text-xs text-slate-500 text-center">v2.0 · Phase 2 ML</p>
       </div>
     </aside>
   )
