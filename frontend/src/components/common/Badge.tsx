@@ -9,20 +9,20 @@ interface Props {
 }
 
 const variants: Record<Variant, string> = {
-  gray: 'bg-gray-100 text-gray-700',
-  green: 'bg-green-100 text-green-700',
-  red: 'bg-red-100 text-red-700',
-  yellow: 'bg-yellow-100 text-yellow-700',
-  blue: 'bg-blue-100 text-blue-700',
-  purple: 'bg-purple-100 text-purple-700',
-  orange: 'bg-orange-100 text-orange-700',
+  gray:   'bg-gray-100 text-gray-600 ring-1 ring-gray-200',
+  green:  'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60',
+  red:    'bg-red-50 text-red-600 ring-1 ring-red-200/60',
+  yellow: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60',
+  blue:   'bg-blue-50 text-blue-700 ring-1 ring-blue-200/60',
+  purple: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200/60',
+  orange: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200/60',
 }
 
 export function Badge({ children, variant = 'gray', className }: Props) {
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+        'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
         variants[variant],
         className,
       )}

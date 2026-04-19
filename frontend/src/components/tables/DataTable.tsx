@@ -30,15 +30,15 @@ export function DataTable<T extends { id: string }>({
   emptyMessage = 'No records found.',
 }: Props<T>) {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-card">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
+        <table className="min-w-full divide-y divide-gray-100">
+          <thead>
+            <tr className="bg-gray-50/70">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 ${col.className ?? ''}`}
+                  className={`px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-gray-400 ${col.className ?? ''}`}
                 >
                   {col.header}
                 </th>
@@ -48,21 +48,21 @@ export function DataTable<T extends { id: string }>({
           <tbody className="divide-y divide-gray-100">
             {loading ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center">
+                <td colSpan={columns.length} className="px-4 py-14 text-center">
                   <Spinner className="mx-auto" />
                 </td>
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-sm text-gray-400">
+                <td colSpan={columns.length} className="px-4 py-14 text-center text-sm text-gray-400">
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
               data.map((row) => (
-                <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={row.id} className="hover:bg-blue-50/30 transition-colors duration-100">
                   {columns.map((col) => (
-                    <td key={col.key} className={`px-4 py-3 text-sm text-gray-700 ${col.className ?? ''}`}>
+                    <td key={col.key} className={`px-4 py-3 text-[13px] text-gray-700 ${col.className ?? ''}`}>
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '')}
                     </td>
                   ))}

@@ -18,6 +18,7 @@ const titleMap: Record<string, string> = {
   '/gl/journals': 'Journals',
   '/gl/trial-balance': 'Trial Balance',
   '/admin/users': 'Users',
+  '/ai': 'AI / MLOps',
 }
 
 export function Layout() {
@@ -28,7 +29,7 @@ export function Layout() {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopNav title={title} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
           <Outlet />
         </main>
       </div>
