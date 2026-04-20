@@ -12,7 +12,7 @@ from app.core.middleware import request_middleware
 from app.api.v1 import auth
 from app.api.v1 import workforce, payroll, accounts_payable
 from app.api.v1 import expenses, procurement, general_ledger, admin
-from app.api.v1 import mlops
+from app.api.v1 import mlops, llmops
 
 
 @asynccontextmanager
@@ -68,6 +68,7 @@ app.include_router(procurement.router,      prefix="/api/v1/procurement", tags=[
 app.include_router(general_ledger.router,   prefix="/api/v1/gl",          tags=["General Ledger"])
 app.include_router(admin.router,            prefix="/api/v1/admin",       tags=["Admin"])
 app.include_router(mlops.router,            prefix="/api/v1/mlops",       tags=["MLOps"])
+app.include_router(llmops.router,           prefix="/api/v1/llmops",      tags=["LLMOps"])
 
 
 @app.get("/api/v1/health", tags=["System"], include_in_schema=False)

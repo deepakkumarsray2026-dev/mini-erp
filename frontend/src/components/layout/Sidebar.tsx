@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom'
 import clsx from 'clsx'
 import {
-  LayoutDashboard, Users, Building2, DollarSign, Receipt,
+  LayoutDashboard, Users, DollarSign, Receipt,
   ShoppingCart, BookOpen, Settings, ChevronDown, ChevronRight,
-  Briefcase, FileText, CreditCard, TrendingUp, Brain,
+  CreditCard, Brain, Briefcase, MessageSquare,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -14,97 +14,156 @@ interface NavItem {
   children?: { label: string; href: string }[]
 }
 
-const nav: NavItem[] = [
-  { label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, href: '/dashboard' },
+interface NavSection {
+  label: string
+  items: NavItem[]
+}
+
+const sections: NavSection[] = [
   {
-    label: 'Workforce', icon: <Users className="h-4 w-4" />,
-    children: [
-      { label: 'Employees', href: '/workforce/employees' },
-      { label: 'Departments', href: '/workforce/departments' },
+    label: 'Core',
+    items: [
+      { label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, href: '/dashboard' },
     ],
   },
   {
-    label: 'Payroll', icon: <DollarSign className="h-4 w-4" />,
-    children: [
-      { label: 'Pay Periods', href: '/payroll/periods' },
-      { label: 'Payslips', href: '/payroll/payslips' },
+    label: 'People',
+    items: [
+      {
+        label: 'Workforce', icon: <Users className="h-4 w-4" />,
+        children: [
+          { label: 'Employees', href: '/workforce/employees' },
+          { label: 'Departments', href: '/workforce/departments' },
+        ],
+      },
+      {
+        label: 'Payroll', icon: <DollarSign className="h-4 w-4" />,
+        children: [
+          { label: 'Pay Periods', href: '/payroll/periods' },
+          { label: 'Payslips', href: '/payroll/payslips' },
+        ],
+      },
     ],
   },
   {
-    label: 'Accounts Payable', icon: <CreditCard className="h-4 w-4" />,
-    children: [
-      { label: 'Vendors', href: '/ap/vendors' },
-      { label: 'Invoices', href: '/ap/invoices' },
+    label: 'Finance',
+    items: [
+      {
+        label: 'Accounts Payable', icon: <CreditCard className="h-4 w-4" />,
+        children: [
+          { label: 'Vendors', href: '/ap/vendors' },
+          { label: 'Invoices', href: '/ap/invoices' },
+        ],
+      },
+      {
+        label: 'Expenses', icon: <Receipt className="h-4 w-4" />,
+        children: [
+          { label: 'Reports', href: '/expenses/reports' },
+        ],
+      },
+      {
+        label: 'General Ledger', icon: <BookOpen className="h-4 w-4" />,
+        children: [
+          { label: 'Chart of Accounts', href: '/gl/accounts' },
+          { label: 'Journals', href: '/gl/journals' },
+          { label: 'Trial Balance', href: '/gl/trial-balance' },
+        ],
+      },
     ],
   },
   {
-    label: 'Expenses', icon: <Receipt className="h-4 w-4" />,
-    children: [
-      { label: 'Reports', href: '/expenses/reports' },
+    label: 'Operations',
+    items: [
+      {
+        label: 'Procurement', icon: <ShoppingCart className="h-4 w-4" />,
+        children: [
+          { label: 'Requisitions', href: '/procurement/requisitions' },
+          { label: 'Purchase Orders', href: '/procurement/orders' },
+        ],
+      },
     ],
   },
   {
-    label: 'Procurement', icon: <ShoppingCart className="h-4 w-4" />,
-    children: [
-      { label: 'Requisitions', href: '/procurement/requisitions' },
-      { label: 'Purchase Orders', href: '/procurement/orders' },
+    label: 'Intelligence',
+    items: [
+      { label: 'AI / MLOps', icon: <Brain className="h-4 w-4" />, href: '/ai' },
+      { label: 'Finance Chat', icon: <MessageSquare className="h-4 w-4" />, href: '/chat' },
     ],
   },
   {
-    label: 'General Ledger', icon: <BookOpen className="h-4 w-4" />,
-    children: [
-      { label: 'Chart of Accounts', href: '/gl/accounts' },
-      { label: 'Journals', href: '/gl/journals' },
-      { label: 'Trial Balance', href: '/gl/trial-balance' },
+    label: 'System',
+    items: [
+      {
+        label: 'Admin', icon: <Settings className="h-4 w-4" />,
+        children: [
+          { label: 'Users', href: '/admin/users' },
+        ],
+      },
     ],
   },
-  {
-    label: 'Admin', icon: <Settings className="h-4 w-4" />,
-    children: [
-      { label: 'Users', href: '/admin/users' },
-    ],
-  },
-  { label: 'AI / MLOps', icon: <Brain className="h-4 w-4" />, href: '/ai' },
 ]
 
 function NavGroup({ item }: { item: NavItem }) {
   const [open, setOpen] = useState(true)
+
   if (item.href) {
     return (
       <NavLink
         to={item.href}
         className={({ isActive }) =>
           clsx(
-            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-            isActive ? 'bg-blue-700 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white',
+            'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-all',
+            isActive
+              ? 'bg-[#0057AE]/15 text-[#5BA4F5]'
+              : 'text-[#94A3B8] hover:bg-white/8 hover:text-[#CBD5E1]',
           )
         }
       >
-        {item.icon}
-        {item.label}
+        {({ isActive }) => (
+          <>
+            <span className="flex-shrink-0 transition-colors" style={isActive ? { color: '#5BA4F5' } : {}}>
+              {item.icon}
+            </span>
+            {item.label}
+          </>
+        )}
       </NavLink>
     )
   }
+
   return (
     <div>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+        className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-all"
+        style={{ color: '#94A3B8' }}
+        onMouseEnter={e => {
+          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'
+          e.currentTarget.style.color = '#CBD5E1'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.backgroundColor = 'transparent'
+          e.currentTarget.style.color = '#94A3B8'
+        }}
       >
-        {item.icon}
+        <span className="flex-shrink-0">{item.icon}</span>
         <span className="flex-1 text-left">{item.label}</span>
-        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        {open
+          ? <ChevronDown className="h-3 w-3" style={{ color: '#4A6080' }} />
+          : <ChevronRight className="h-3 w-3" style={{ color: '#4A6080' }} />}
       </button>
       {open && item.children && (
-        <div className="ml-7 mt-1 flex flex-col gap-0.5">
+        <div className="ml-[26px] mt-0.5 flex flex-col pl-3 gap-0.5" style={{ borderLeft: '1px solid #2E4066' }}>
           {item.children.map((child) => (
             <NavLink
               key={child.href}
               to={child.href}
               className={({ isActive }) =>
                 clsx(
-                  'rounded-md px-3 py-1.5 text-sm transition-colors',
-                  isActive ? 'bg-blue-700 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-slate-700',
+                  'rounded-md px-2 py-1.5 text-[12.5px] transition-all',
+                  isActive
+                    ? 'font-semibold text-[#5BA4F5]'
+                    : 'text-[#64748B] hover:text-[#CBD5E1]',
                 )
               }
             >
@@ -119,18 +178,40 @@ function NavGroup({ item }: { item: NavItem }) {
 
 export function Sidebar() {
   return (
-    <aside className="flex h-full w-60 flex-col bg-slate-900">
-      <div className="flex h-14 items-center gap-2 border-b border-slate-700 px-4">
-        <Briefcase className="h-6 w-6 text-blue-400" />
-        <span className="text-lg font-bold text-white tracking-tight">Mini ERP</span>
+    <aside className="flex h-full w-56 flex-col" style={{ backgroundColor: '#1C2B4A', borderRight: '1px solid #243558' }}>
+      {/* Logo */}
+      <div className="flex h-14 items-center gap-2.5 px-4" style={{ borderBottom: '1px solid #243558' }}>
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-lg"
+          style={{ backgroundColor: '#0057AE' }}
+        >
+          <Briefcase className="h-4 w-4 text-white" />
+        </div>
+        <span className="text-[15px] font-semibold tracking-tight text-white">Mini ERP</span>
       </div>
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {nav.map((item) => (
-          <NavGroup key={item.label} item={item} />
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        {sections.map((section) => (
+          <div key={section.label}>
+            <p className="mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#4A6080' }}>
+              {section.label}
+            </p>
+            <div className="space-y-0.5">
+              {section.items.map((item) => (
+                <NavGroup key={item.label} item={item} />
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
-      <div className="border-t border-slate-700 px-3 py-3">
-        <p className="text-xs text-slate-500 text-center">v2.0 · Phase 2 ML</p>
+
+      {/* Footer */}
+      <div className="px-4 py-3" style={{ borderTop: '1px solid #243558' }}>
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <p className="text-[11px]" style={{ color: '#4A6080' }}>v3.0 · Phase 3 RAG+LLM</p>
+        </div>
       </div>
     </aside>
   )

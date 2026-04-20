@@ -1,6 +1,6 @@
 # Mini-ERP Platform
 
-A full-stack Enterprise Resource Planning platform built as a portfolio project demonstrating progressive AI/ML integration — from basic CRUD through Machine Learning, Deep Learning, RAG/LLM, and Agentic AI.
+A full-stack Enterprise Resource Planning platform built as a portfolio project demonstrating progressive AI/ML integration — from basic CRUD through Machine Learning, RAG/LLM, Deep Learning, and Agentic AI.
 
 **Live Demo:** `http://34.13.57.203:3000` &nbsp;|&nbsp; **API Docs:** `http://34.13.57.203:8000/docs`
 
@@ -11,9 +11,9 @@ A full-stack Enterprise Resource Planning platform built as a portfolio project 
 | Layer | Technology |
 |---|---|
 | **Backend** | FastAPI · Python 3.11 · SQLAlchemy 2.0 (async) · Alembic |
-| **Database** | PostgreSQL 15 |
+| **Database** | PostgreSQL 15 · pgvector (embeddings) |
 | **Cache / Queue** | Redis 7 · Celery |
-| **ML** | scikit-learn · imbalanced-learn · pandas · NumPy · joblib |
+| **ML / LLM** | scikit-learn · imbalanced-learn · pandas · NumPy · joblib · Anthropic Claude · Groq · Ollama |
 | **Frontend** | React 18 · TypeScript · Vite · Tailwind CSS |
 | **State / Data** | Zustand · TanStack Query · React Hook Form |
 | **Infrastructure** | Docker · Docker Compose · GCP (free tier) · Nginx |
@@ -27,8 +27,8 @@ A full-stack Enterprise Resource Planning platform built as a portfolio project 
 | **Week 0** | GCP setup, CI/CD, DB schema, RBAC | ✅ Done |
 | **Phase 1** | MVP ERP — Workforce, Payroll, AP, Expenses, Procurement, GL | ✅ Done |
 | **Phase 2** | Machine Learning — Attrition, Expense Violations, Payroll Anomaly, Invoice Classifier | ✅ Done |
-| **Phase 3** | Deep Learning — LSTM Budget Forecaster, CNN Invoice Image Classifier | ⏳ Pending |
-| **Phase 4** | RAG + LLM — Duplicate Invoice Detection, Finance Chat, OCR Pipeline | ⏳ Pending |
+| **Phase 3** | RAG + LLM — Finance Chat (Text-to-SQL), Duplicate Invoice Detection | ✅ Done |
+| **Phase 4** | Deep Learning — LSTM Budget Forecaster, CNN Invoice Image Classifier | ⏳ Pending |
 | **Phase 5** | AI Agents — Invoice Agent, Expense Audit Agent, Onboarding Agent | ⏳ Pending |
 | **Phase 6** | Agentic Networks — Financial Close Network, Workforce Planning Network | ⏳ Pending |
 | **Week 11** | Polish, Docs, Portfolio Deploy | ⏳ Pending |
@@ -37,111 +37,119 @@ A full-stack Enterprise Resource Planning platform built as a portfolio project 
 
 ## Architecture
 
-### Current State — Phase 2 (Machine Learning)
+### Current State — Phases 1 + 2 + 3 ✅
 
 ```mermaid
 graph TB
     subgraph Client["Browser / Client"]
-        FE["React 18 + TypeScript\nVite · Tailwind CSS\nZustand · TanStack Query"]
+        FE["React 18 + TypeScript · Vite · Tailwind\nPhase 1: ERP Modules (7 domains)\nPhase 2: AI/MLOps Dashboard\nPhase 3: Finance Chat UI"]
     end
 
-    subgraph Gateway["Gateway"]
-        NG["Nginx\n(reverse proxy)"]
+    subgraph GW["Gateway"]
+        NG["Nginx · reverse proxy\n:80 → :3000 (UI) · :8000 (API)"]
     end
 
-    subgraph Backend["FastAPI Backend (Python 3.11)"]
-        API["REST API\n/api/v1/*"]
-        AUTH["JWT + RBAC\nauth.py"]
-        SVC["Business Logic\nservices/"]
-        ML["ML Layer\nscikit-learn · joblib\nSMOTE · TF-IDF"]
+    subgraph BE["FastAPI Backend · Python 3.11 · SQLAlchemy 2.0 async"]
+        API["JWT + RBAC · /api/v1/*"]
+        ERP["Phase 1 — Core ERP\nauth · workforce · payroll · ap\nexpenses · procurement · gl · admin"]
+        ML["Phase 2 — Machine Learning  ✅\n/api/v1/mlops/*\nAttrition · Expense Violation\nPayroll Anomaly · Invoice Classifier"]
+        LLM["Phase 3 — RAG + LLM  ✅\n/api/v1/llmops/*\nFinance Chat (Text-to-SQL)\nDuplicate Invoice (pgvector cosine sim)"]
     end
 
-    subgraph Storage["Storage"]
-        PG["PostgreSQL 15\n8 schemas"]
-        RD["Redis 7\ncache / queue"]
-        FS["File System\n/app/models_store\n.joblib artifacts"]
+    subgraph ST["Storage"]
+        PG["PostgreSQL 15 + pgvector\nauth · hcm · payroll · ap\nexpenses · procurement · gl\nmlops (models · metrics · predictions)\nmlops (conversations · embeddings)"]
+        RD["Redis 7\nCelery broker · result backend · cache"]
+        FS["File System\n/app/models_store — .joblib artifacts"]
     end
 
-    subgraph Workers["Background Workers"]
-        CW["Celery Worker\nasync tasks"]
+    subgraph WK["Background Workers"]
+        CW["Celery Worker\nML training jobs (Phase 2)"]
     end
 
-    FE -->|HTTP| NG
-    NG -->|proxy :8000| API
-    NG -->|proxy :3000| FE
-    API --> AUTH
-    API --> SVC
-    API --> ML
-    SVC --> PG
+    subgraph LP["LLM Providers (Phase 3)"]
+        ANT["Anthropic Claude\ndefault · chat"]
+        GROQ["Groq API\nOpenAI-compatible · free tier"]
+        OLL["Ollama\nlocal / offline"]
+    end
+
+    FE -->|HTTP/JSON| NG
+    NG -->|:8000| API
+    NG -->|:3000| FE
+    API --> ERP & ML & LLM
+    ERP --> PG
     ML --> PG
     ML --> FS
-    API --> RD
+    ML -->|enqueue training| RD
+    LLM --> PG
+    LLM -->|tool-calling| ANT
+    LLM -.->|alt provider| GROQ
+    LLM -.->|alt provider| OLL
     RD --> CW
     CW --> PG
+    CW --> FS
 
     style Client fill:#dbeafe,stroke:#3b82f6
-    style Backend fill:#dcfce7,stroke:#16a34a
-    style Storage fill:#fef9c3,stroke:#ca8a04
-    style Workers fill:#fce7f3,stroke:#db2777
-    style Gateway fill:#f3f4f6,stroke:#6b7280
+    style BE fill:#dcfce7,stroke:#16a34a
+    style ST fill:#fef9c3,stroke:#ca8a04
+    style WK fill:#fce7f3,stroke:#db2777
+    style GW fill:#f3f4f6,stroke:#6b7280
+    style LP fill:#ede9fe,stroke:#7c3aed
 ```
 
-### Future State — Phase 6 (Agentic AI Platform)
+### Target State — Phase 6 (Agentic AI Platform)
+
+> Phases 1–3 (shown above) remain in place. The diagram below shows only the **new layers** added in Phases 4–6.
 
 ```mermaid
 graph TB
-    subgraph Client["Browser / Client"]
-        FE["React Frontend\n+ Chat UI\n+ Agent Console"]
+    subgraph Current["Current Platform (Phases 1–3)  ✅"]
+        PLAT["Core ERP + ML Models + Finance Chat\n/api/v1/* · /api/v1/mlops/* · /api/v1/llmops/*\nPostgreSQL · pgvector · Redis · Celery"]
     end
 
-    subgraph Gateway["Gateway"]
-        NG["Nginx + Auth Middleware"]
+    subgraph P4["Phase 4 — Deep Learning  ⏳"]
+        LSTM["LSTM Budget Forecaster\ntime-series GL spend prediction"]
+        CNN["CNN Invoice Image Classifier\nscanned invoice category detection"]
     end
 
-    subgraph Backend["FastAPI Backend"]
-        API["REST API\n/api/v1/*"]
-        ML["Phase 2 — ML\nAttrition · Anomaly\nViolation · Classifier"]
-        DL["Phase 3 — Deep Learning\nLSTM Budget Forecaster\nCNN Invoice Classifier"]
-        RAG["Phase 4 — RAG + LLM\nDuplicate Invoice\nFinance Chat · OCR"]
-        AGT["Phase 5 — AI Agents\nInvoice Agent\nExpense Audit Agent\nOnboarding Agent"]
-        NET["Phase 6 — Agentic Networks\nFinancial Close Network\nWorkforce Planning Network"]
+    subgraph P5["Phase 5 — AI Agents  ⏳"]
+        AINV["Invoice Processing Agent\nauto-match · approve · post to GL"]
+        AEXP["Expense Audit Agent\npolicy check · violation escalation"]
+        AONB["Employee Onboarding Agent\nmulti-step HR workflow automation"]
     end
 
-    subgraph Storage["Storage"]
-        PG["PostgreSQL 15"]
-        RD["Redis 7"]
-        FS["Model Store\n.joblib / .pt / .onnx"]
-        VDB["Vector DB\n(pgvector / Chroma)"]
-        OBJ["Object Store\nInvoice images · PDFs"]
+    subgraph P6["Phase 6 — Agentic Networks  ⏳"]
+        AFIN["Financial Close Network\ncoordinated multi-agent period close"]
+        AWFP["Workforce Planning Network\nheadcount · budget · org design agents"]
     end
 
-    subgraph LLM["LLM / Embeddings"]
-        LLM_API["Anthropic Claude\n/ OpenAI API"]
+    subgraph NewStorage["Additional Storage (Phase 4+)"]
+        MS["Model Store additions\n.pt (PyTorch) · .onnx (export)"]
+        VS["Vector Store expansion\nRAG over documents · policies"]
     end
 
-    subgraph Workers["Workers"]
-        CW["Celery\nasync tasks"]
-        LG["LangGraph\nagent runtime"]
+    subgraph AgentRuntime["Agent Runtime (Phase 5+)"]
+        LG["LangGraph\norchestration · state machines"]
+        LLM_A["Anthropic Claude\ntool-calling · multi-step reasoning"]
     end
 
-    FE --> NG --> API
-    API --> ML & DL & RAG & AGT & NET
-    ML & DL --> FS
-    RAG --> VDB & OBJ & LLM_API
-    AGT --> LG & LLM_API
-    NET --> LG & LLM_API
-    API --> RD --> CW
-    CW & LG --> PG
+    PLAT --> LSTM & CNN
+    PLAT --> AINV & AEXP & AONB
+    PLAT --> AFIN & AWFP
+    LSTM & CNN --> MS
+    AINV & AEXP & AONB --> LG
+    AFIN & AWFP --> LG
+    LG --> LLM_A
+    LG --> VS
 
-    style Client fill:#dbeafe,stroke:#3b82f6
-    style Backend fill:#dcfce7,stroke:#16a34a
-    style Storage fill:#fef9c3,stroke:#ca8a04
-    style Workers fill:#fce7f3,stroke:#db2777
-    style LLM fill:#ede9fe,stroke:#7c3aed
-    style Gateway fill:#f3f4f6,stroke:#6b7280
+    style Current fill:#dcfce7,stroke:#16a34a
+    style P4 fill:#eff6ff,stroke:#3b82f6
+    style P5 fill:#faf5ff,stroke:#7c3aed
+    style P6 fill:#fdf4ff,stroke:#a855f7
+    style NewStorage fill:#fef9c3,stroke:#ca8a04
+    style AgentRuntime fill:#ede9fe,stroke:#7c3aed
 ```
 
-> **Note:** Both diagrams are updated as each phase is completed.
+> The target state diagram is updated at each phase completion.
 
 ---
 
@@ -160,31 +168,43 @@ mini-erp/
 │   │   │   ├── procurement.py
 │   │   │   ├── general_ledger.py
 │   │   │   ├── admin.py
-│   │   │   └── mlops.py
+│   │   │   ├── mlops.py
+│   │   │   └── llmops.py            # Phase 3 — LLM/RAG endpoints
 │   │   ├── models/              # SQLAlchemy ORM models
 │   │   ├── schemas/             # Pydantic request/response schemas
 │   │   ├── services/            # Business logic
 │   │   ├── ml/
 │   │   │   ├── features/        # Feature engineering per model
 │   │   │   ├── models/          # ML model train + predict functions
-│   │   │   └── pipelines/       # Training & inference orchestration
+│   │   │   ├── pipelines/       # Training & inference orchestration
+│   │   │   └── llm/             # Phase 3 — LLM services
+│   │   │       ├── chat_service.py      # Text-to-SQL engine
+│   │   │       └── embedding_service.py # pgvector invoice embeddings
+│   │   ├── tasks/
 │   │   ├── data/                # Seed scripts
 │   │   └── core/                # Config, DB, security, logging
 │   ├── alembic/                 # DB migrations
 │   └── requirements.txt
 ├── frontend/
 │   └── src/
-│       ├── modules/             # Feature modules (one per ERP domain)
+│       ├── modules/
+│       │   ├── chat/            # Phase 3 — Finance Chat UI
+│       │   └── ...              # Other ERP modules
 │       ├── components/          # Shared UI components
-│       ├── services/            # API client layer
+│       ├── services/
+│       │   ├── llm.service.ts   # Phase 3 — LLM API client
+│       │   └── ...
 │       └── store/               # Zustand global state
+├── docs/
+│   ├── ai_chat.md               # Phase 3 — Finance Chat documentation
+│   └── CHANGELOG.md             # Phase-wise release notes
 ├── infrastructure/
 │   ├── db/                      # init.sql
 │   ├── scripts/                 # GCP provisioning
 │   └── nginx/
 ├── docker-compose.dev.yml
 ├── docker-compose.prod.yml
-├── start.sh                     # One-command dev stack start
+├── start.sh
 └── stop.sh
 ```
 
@@ -196,6 +216,7 @@ mini-erp/
 
 - Docker & Docker Compose
 - Git
+- A Groq API key or local Ollama instance for Phase 3 Finance Chat / duplicate detection
 
 ### 1. Clone the repository
 
@@ -210,19 +231,25 @@ cd mini-erp
 cp backend/.env.example backend/.env.dev
 ```
 
-Edit `backend/.env.dev` and set a strong `SECRET_KEY`:
+Edit `backend/.env.dev`:
 
 ```env
 APP_ENV=development
 SECRET_KEY=your-secret-key-here
-DATABASE_URL=postgresql+asyncpg://erp_user:changeme@db:5432/mini_erp
-DATABASE_URL_SYNC=postgresql://erp_user:changeme@db:5432/mini_erp
+DATABASE_URL=postgresql+asyncpg://erp_user:<db-password>@db:5432/mini_erp
+DATABASE_URL_SYNC=postgresql://erp_user:<db-password>@db:5432/mini_erp
 REDIS_URL=redis://redis:6379/0
 CELERY_BROKER_URL=redis://redis:6379/1
 CELERY_RESULT_BACKEND=redis://redis:6379/2
 MODELS_DIR=/app/models_store
 UPLOAD_DIR=/app/uploads
 LOG_LEVEL=INFO
+
+# Phase 3 — LLM provider (choose one: groq | ollama | anthropic)
+LLM_PROVIDER=groq
+GROQ_API_KEY=gsk_...
+# OLLAMA_BASE_URL=http://host.docker.internal:11434
+# ANTHROPIC_API_KEY=sk-ant-...   # only needed if LLM_PROVIDER=anthropic
 ```
 
 ### 3. Start the stack
@@ -230,8 +257,6 @@ LOG_LEVEL=INFO
 ```bash
 ./start.sh
 ```
-
-This builds all images, starts containers, waits for health checks, and runs migrations automatically.
 
 Or manually:
 
@@ -256,12 +281,14 @@ docker compose -f docker-compose.dev.yml exec -T -e PYTHONPATH=/app backend pyth
 
 **Default credentials:**
 
-| Username | Password | Role |
-|---|---|---|
-| `platform_admin` | `Admin@123!` | Platform Admin (full access) |
-| `hr_admin` | `Admin@123!` | HR Admin |
-| `finance_admin` | `Admin@123!` | Finance Admin |
-| `workforce_user1` | `User@123!` | Workforce read/write |
+| Username | Role |
+|---|---|
+| `platform_admin` | Platform Admin (full access) |
+| `hr_admin` | HR Admin |
+| `finance_admin` | Finance Admin |
+| `workforce_user1` | Workforce read/write |
+
+> Seed passwords are set in `backend/app/data/seed_all.py`. Contact the Platform Administrator for access in deployed environments.
 
 ---
 
@@ -284,45 +311,29 @@ docker compose -f docker-compose.dev.yml exec -T -e PYTHONPATH=/app backend pyth
 
 All ML endpoints are under `/api/v1/mlops/`.
 
-#### Models
-
 | Model | Algorithm | Task |
 |---|---|---|
 | **Attrition Predictor** | RandomForest + SMOTE | Binary: predict employee attrition risk |
-| **Expense Violation Detector** | GradientBoosting / IsolationForest fallback | Binary: detect policy violations in expense lines |
+| **Expense Violation Detector** | GradientBoosting / IsolationForest fallback | Binary: detect policy violations |
 | **Payroll Anomaly Detector** | RandomForest / IsolationForest fallback | Binary: flag anomalous payslips |
 | **Invoice Classifier** | RandomForest + TF-IDF | Multi-class: categorise invoices into 10 spend categories |
 
-#### Training a model
-
 ```bash
+# Train a model
 curl -X POST http://localhost:8000/api/v1/mlops/train/attrition_predictor \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"triggered_by": "manual"}'
+  -H "Authorization: Bearer <token>"
 ```
 
-Valid `model_type` values: `attrition_predictor`, `expense_violation`, `payroll_anomaly`, `invoice_classifier`
+### Phase 3 — RAG + LLM
 
-#### Batch Insights endpoints
+All LLM endpoints are under `/api/v1/llmops/`. See [docs/ai_chat.md](docs/ai_chat.md) for full details.
 
-```
-GET /api/v1/mlops/insights/attrition-risk?limit=10
-GET /api/v1/mlops/insights/expense-violations?limit=10
-GET /api/v1/mlops/insights/payroll-anomalies?limit=10
-GET /api/v1/mlops/insights/invoice-classifications?limit=10
-```
+| Feature | Endpoint prefix | Description |
+|---|---|---|
+| **Finance Chat** | `/api/v1/llmops/chat/` | Natural-language Text-to-SQL over all ERP schemas |
+| **Duplicate Invoice Detection** | `/api/v1/llmops/invoices/` | pgvector cosine-similarity embedding search |
 
-These batch-score all entities and return the top N ranked by risk/confidence — used to power the AI dashboard.
-
-#### MLOps registry endpoints
-
-```
-GET  /api/v1/mlops/models                          # List registered models
-GET  /api/v1/mlops/models/{model_id}               # Model detail + metrics
-GET  /api/v1/mlops/predictions                     # Prediction audit log
-GET  /api/v1/mlops/jobs                            # Training job history
-```
+**Provider support:** Anthropic Claude (default) · Groq (OpenAI-compatible) · Ollama (local)
 
 ---
 
@@ -345,18 +356,13 @@ GET  /api/v1/mlops/jobs                            # Training job history
 | `/gl/trial-balance` | Trial balance |
 | `/admin/users` | User & role management |
 | `/ai` | AI/MLOps dashboard (insights, model registry, prediction log) |
-
-### AI Dashboard (`/ai`)
-
-- **Insights tab** — Top 10 by attrition risk, expense violations, payroll anomalies, and invoice classifications. Rows exceeding 60% threshold highlighted in red. Each section has a "View All > 60%" modal.
-- **Model Registry tab** — Trained model cards showing algorithm, version, training date, and evaluation metrics (accuracy, ROC-AUC, F1, CV-AUC).
-- **Prediction Log tab** — Paginated audit trail of every inference call.
+| `/chat` | Finance Chat — natural language queries over ERP data |
 
 ---
 
 ## Database Schema
 
-PostgreSQL with 8 schemas:
+PostgreSQL with 9 schemas:
 
 | Schema | Tables |
 |---|---|
@@ -368,6 +374,7 @@ PostgreSQL with 8 schemas:
 | `procurement` | purchase_requisitions, purchase_orders, po_lines, goods_receipts |
 | `gl` | accounts, fiscal_periods, journals, journal_lines, budgets |
 | `mlops` | ml_models, ml_model_metrics, ml_prediction_logs, ml_training_jobs |
+| `mlops` (Phase 3) | llm_conversations, llm_chat_messages, llm_embeddings |
 
 ---
 

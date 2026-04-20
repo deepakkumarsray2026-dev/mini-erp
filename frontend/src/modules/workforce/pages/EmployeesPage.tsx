@@ -217,7 +217,7 @@ export default function EmployeesPage() {
       key: 'full_name', header: 'Name',
       render: (r) => (
         <div>
-          <p className="font-medium text-gray-900">{r.full_name}</p>
+          <p className="font-medium" style={{ color: '#111827' }}>{r.full_name}</p>
           <p className="text-xs text-gray-400">{r.email}</p>
         </div>
       ),

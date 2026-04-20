@@ -30,39 +30,53 @@ export function DataTable<T extends { id: string }>({
   emptyMessage = 'No records found.',
 }: Props<T>) {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <div
+      className="overflow-hidden rounded-xl"
+      style={{ border: '1px solid #E2E6EA', backgroundColor: '#FFFFFF', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+    >
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
+        <table className="min-w-full" style={{ borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#F8F9FB' }}>
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 ${col.className ?? ''}`}
+                  className={`px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest ${col.className ?? ''}`}
+                  style={{ color: '#6B7280', borderBottom: '1px solid #E2E6EA' }}
                 >
                   {col.header}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {loading ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center">
+                <td colSpan={columns.length} className="px-4 py-14 text-center">
                   <Spinner className="mx-auto" />
                 </td>
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-sm text-gray-400">
+                <td colSpan={columns.length} className="px-4 py-14 text-center text-sm" style={{ color: '#9CA3AF' }}>
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
-              data.map((row) => (
-                <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+              data.map((row, idx) => (
+                <tr
+                  key={row.id}
+                  className="transition-colors duration-100"
+                  style={{ borderTop: idx > 0 ? '1px solid #F3F4F6' : undefined }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#F8FAFF')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
                   {columns.map((col) => (
-                    <td key={col.key} className={`px-4 py-3 text-sm text-gray-700 ${col.className ?? ''}`}>
+                    <td
+                      key={col.key}
+                      className={`px-4 py-3 text-[13px] ${col.className ?? ''}`}
+                      style={{ color: '#374151' }}
+                    >
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '')}
                     </td>
                   ))}

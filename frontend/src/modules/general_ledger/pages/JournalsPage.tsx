@@ -72,15 +72,15 @@ function CreateJournalForm({
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700">Journal Lines</label>
+          <label className="text-sm font-medium" style={{ color: '#374151' }}>Journal Lines</label>
           <button type="button" onClick={() => append({ account_code: '', debit: 0, credit: 0, description: '' })}
-            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">
+            className="text-xs flex items-center gap-1" style={{ color: '#0057AE' }}>
             <Plus className="h-3 w-3" /> Add Line
           </button>
         </div>
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #D1D5DB' }}>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+            <thead className="text-xs uppercase" style={{ backgroundColor: '#F8F9FB', color: '#6B7280', borderBottom: '1px solid #E2E6EA' }}>
               <tr>
                 <th className="px-3 py-2 text-left">Account</th>
                 <th className="px-3 py-2 text-right w-28">Debit</th>
@@ -88,9 +88,9 @@ function CreateJournalForm({
                 <th className="px-3 py-2 w-8"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {fields.map((field, i) => (
-                <tr key={field.id}>
+                <tr key={field.id} style={{ borderTop: i > 0 ? '1px solid #F3F4F6' : undefined }}>
                   <td className="px-3 py-2">
                     <select {...register(`lines.${i}.account_code`, { required: true })} className={inputCls + ' text-xs'}>
                       <option value="">Select account…</option>
@@ -109,7 +109,9 @@ function CreateJournalForm({
                   </td>
                   <td className="px-3 py-2">
                     {fields.length > 2 && (
-                      <button type="button" onClick={() => remove(i)} className="text-gray-300 hover:text-red-500">
+                      <button type="button" onClick={() => remove(i)} style={{ color: '#D1D5DB' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
+                        onMouseLeave={e => (e.currentTarget.style.color = '#D1D5DB')}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     )}
@@ -117,13 +119,13 @@ function CreateJournalForm({
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-gray-50 text-xs font-semibold">
+            <tfoot className="text-xs font-semibold" style={{ borderTop: '1px solid #E2E6EA', backgroundColor: '#F8F9FB' }}>
               <tr>
-                <td className="px-3 py-2 text-gray-500">Totals</td>
-                <td className={`px-3 py-2 text-right ${isBalanced ? 'text-green-700' : 'text-red-600'}`}>
+                <td className="px-3 py-2" style={{ color: '#6B7280' }}>Totals</td>
+                <td className="px-3 py-2 text-right" style={{ color: isBalanced ? '#15803D' : '#DC2626' }}>
                   {fmt(totalDebit)}
                 </td>
-                <td className={`px-3 py-2 text-right ${isBalanced ? 'text-green-700' : 'text-red-600'}`}>
+                <td className="px-3 py-2 text-right" style={{ color: isBalanced ? '#15803D' : '#DC2626' }}>
                   {fmt(totalCredit)}
                 </td>
                 <td />
@@ -132,7 +134,7 @@ function CreateJournalForm({
           </table>
         </div>
         {!isBalanced && totalDebit > 0 && (
-          <p className="mt-1 text-xs text-red-600">Journal is not balanced — debits must equal credits</p>
+          <p className="mt-1 text-xs text-red-500">Journal is not balanced — debits must equal credits</p>
         )}
       </div>
 

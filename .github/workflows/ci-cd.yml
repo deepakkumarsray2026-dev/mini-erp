@@ -1,0 +1,45 @@
+name: Deploy to Production
+
+# Triggers when code lands on main (via PR merge or direct push)
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: SSH deploy → GCP VM
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Deploy via SSH ──────────────────────────────────────────────────
+      - name: Deploy to production VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.PROD_VM_HOST }}
+          username: ${{ secrets.PROD_VM_USER }}
+          key:      ${{ secrets.PROD_SSH_KEY }}
+          timeout:  600s
+          script: |
+            set -e
+            cd /opt/mini-erp
+
+            echo "── Pull latest main ──────────────────────────────"
+            git fetch origin main
+            git checkout main
+            git pull origin main
+
+            echo "── Build & restart containers ────────────────────"
+            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+
+            echo "── Run DB migrations ─────────────────────────────"
+            docker compose -f docker-compose.prod.yml exec -T \
+              -e PYTHONPATH=/app backend \
+              alembic upgrade head
+
+            echo "── Health check ──────────────────────────────────"
+            sleep 10
+            curl -sf http://localhost/health && echo "✅ Healthy" || echo "⚠️  Health check failed"
+
+            echo "── Prune old images ──────────────────────────────"
+            docker image prune -f

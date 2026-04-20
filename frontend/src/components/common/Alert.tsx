@@ -6,16 +6,16 @@ interface Props {
   className?: string
 }
 
-const styles = {
-  info: 'bg-blue-50 text-blue-800 border-blue-200',
-  success: 'bg-green-50 text-green-800 border-green-200',
-  warning: 'bg-yellow-50 text-yellow-800 border-yellow-200',
-  error: 'bg-red-50 text-red-800 border-red-200',
+const styles: Record<string, React.CSSProperties> = {
+  info:    { backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8' },
+  success: { backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#15803D' },
+  warning: { backgroundColor: '#FFFBEB', border: '1px solid #FDE68A', color: '#92400E' },
+  error:   { backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626' },
 }
 
 export function Alert({ type = 'info', message, className }: Props) {
   return (
-    <div className={clsx('rounded-lg border px-4 py-3 text-sm', styles[type], className)}>
+    <div className={clsx('rounded-lg px-4 py-3 text-sm', className)} style={styles[type]}>
       {message}
     </div>
   )

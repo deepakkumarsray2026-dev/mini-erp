@@ -2,7 +2,7 @@
 
 ## Project Overview
 A full-stack ERP platform built as a portfolio project demonstrating progression from
-basic CRUD through ML, Deep Learning, RAG/LLM, and Agentic AI.
+basic CRUD through ML, RAG/LLM, Deep Learning, and Agentic AI.
 
 **Stack:** FastAPI · PostgreSQL · Redis · Celery · React (TypeScript) · Docker · GCP
 
@@ -15,8 +15,8 @@ basic CRUD through ML, Deep Learning, RAG/LLM, and Agentic AI.
 | Week 0 | Setup & Infrastructure (GCP, GitHub, CI/CD, DB schema) | ✅ Done |
 | Phase 1 | MVP mini-ERP CRUD (Workforce, Payroll, AP, Expenses, Procurement, GL) | ✅ Built — needs VM deploy |
 | Phase 2 | Machine Learning (Attrition, Expense Violations, Payroll Anomaly, Invoice Classifier) | 🔄 Partial |
-| Phase 3 | Deep Learning (LSTM Budget Forecaster, CNN Invoice Image Classifier) | ⏳ Pending |
-| Phase 4 | RAG + LLM (Duplicate Invoice, Finance Chat, OCR Pipeline) | ⏳ Pending |
+| Phase 3 | RAG + LLM (Finance Chat, Duplicate Invoice Detection) | ✅ Done |
+| Phase 4 | Deep Learning (LSTM Budget Forecaster, CNN Invoice Image Classifier) | ⏳ Pending |
 | Phase 5 | AI Agents (Invoice Agent, Expense Audit Agent, Onboarding Agent) | ⏳ Pending |
 | Phase 6 | Agentic Networks (Financial Close Network, Workforce Planning Network) | ⏳ Pending |
 | Week 11 | Polish, Docs, Portfolio Deploy | ⏳ Pending |
@@ -75,7 +75,7 @@ mini-erp/
 
 **Connection (dev):**
 ```
-postgresql://erp_user:changeme@localhost:5432/mini_erp
+postgresql://erp_user:<db-password>@localhost:5432/mini_erp
 ```
 Inside Docker: host is `db` not `localhost`.
 
@@ -138,8 +138,8 @@ All endpoints are under `/api/v1/`:
 ```env
 APP_ENV=development
 SECRET_KEY=<generate a strong key>
-DATABASE_URL=postgresql+asyncpg://erp_user:changeme@db:5432/mini_erp
-DATABASE_URL_SYNC=postgresql://erp_user:changeme@db:5432/mini_erp
+DATABASE_URL=postgresql+asyncpg://erp_user:<db-password>@db:5432/mini_erp
+DATABASE_URL_SYNC=postgresql://erp_user:<db-password>@db:5432/mini_erp
 REDIS_URL=redis://redis:6379/0
 CELERY_BROKER_URL=redis://redis:6379/1
 CELERY_RESULT_BACKEND=redis://redis:6379/2
