@@ -17,6 +17,7 @@ import JournalsPage from './modules/general_ledger/pages/JournalsPage'
 import TrialBalancePage from './modules/general_ledger/pages/TrialBalancePage'
 import UsersPage from './modules/admin/pages/UsersPage'
 import AIDashboardPage from './modules/ai_dashboard/pages/AIDashboardPage'
+import ChatPage from './modules/chat/pages/ChatPage'
 
 export const router = createBrowserRouter([
   {
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
       { path: '/gl/trial-balance', element: <TrialBalancePage /> },
       { path: '/admin/users', element: <UsersPage /> },
       { path: '/ai', element: <AIDashboardPage /> },
+      { path: '/chat', element: <ChatPage /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

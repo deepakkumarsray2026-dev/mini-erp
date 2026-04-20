@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: mini_erp_db
     restart: unless-stopped
     environment:
@@ -79,6 +79,21 @@ services:
       redis:
         condition: service_healthy
 
+  ollama:
+    image: ollama/ollama
+    container_name: mini_erp_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   frontend:
     build:
       context: ./frontend
@@ -95,3 +110,4 @@ services:
 
 volumes:
   postgres_data:
+  ollama_data:

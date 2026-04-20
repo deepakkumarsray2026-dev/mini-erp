@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import {
   LayoutDashboard, Users, DollarSign, Receipt,
   ShoppingCart, BookOpen, Settings, ChevronDown, ChevronRight,
-  CreditCard, Brain, Briefcase,
+  CreditCard, Brain, Briefcase, MessageSquare,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -87,6 +87,7 @@ const sections: NavSection[] = [
     label: 'Intelligence',
     items: [
       { label: 'AI / MLOps', icon: <Brain className="h-4 w-4" />, href: '/ai' },
+      { label: 'Finance Chat', icon: <MessageSquare className="h-4 w-4" />, href: '/chat' },
     ],
   },
   {
@@ -209,7 +210,7 @@ export function Sidebar() {
       <div className="px-4 py-3" style={{ borderTop: '1px solid #243558' }}>
         <div className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <p className="text-[11px]" style={{ color: '#4A6080' }}>v2.0 · Phase 2 ML</p>
+          <p className="text-[11px]" style={{ color: '#4A6080' }}>v3.0 · Phase 3 RAG+LLM</p>
         </div>
       </div>
     </aside>

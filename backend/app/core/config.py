@@ -33,10 +33,27 @@ class Settings(BaseSettings):
     MODELS_DIR: str = "/app/models_store"
     GCS_BUCKET: str = ""
 
-    # AI Keys (optional until Phase 4)
+    # AI Keys
     OPENAI_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""
+
+    # LLM / RAG (Phase 3)
+    # Provider: "ollama" (local, no key) | "anthropic" | "groq"
+    LLM_PROVIDER: str = "ollama"
+    OLLAMA_BASE_URL: str = "http://ollama:11434"
+    OLLAMA_CHAT_MODEL: str = "llama3.2:3b"
+    OLLAMA_EMBED_MODEL: str = "nomic-embed-text"
+    # Used when LLM_PROVIDER=anthropic
+    CHAT_MODEL: str = "claude-sonnet-4-6"
+    # Used when LLM_PROVIDER=groq
+    GROQ_API_KEY: str = ""
+    GROQ_CHAT_MODEL: str = "llama-3.3-70b-versatile"
+    # Embeddings (nomic-embed-text = 768, text-embedding-3-small = 1536)
+    EMBEDDING_MODEL: str = "nomic-embed-text"
+    EMBEDDING_DIM: int = 768
+    MAX_SQL_ROWS: int = 500
+    CHAT_HISTORY_LIMIT: int = 20
 
     # Logging
     LOG_LEVEL: str = "INFO"

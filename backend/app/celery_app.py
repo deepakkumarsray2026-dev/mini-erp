@@ -5,7 +5,7 @@ celery = Celery(
     "mini_erp",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.tasks"],
+    include=["app.tasks", "app.tasks.ocr_tasks"],
 )
 
 celery.conf.update(
