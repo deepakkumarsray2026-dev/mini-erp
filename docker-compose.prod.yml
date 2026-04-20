@@ -1,0 +1,129 @@
+version: "3.9"
+
+# ── Production stack ──────────────────────────────────────────────────────────
+# Differences from dev:
+#   - Code is BAKED into images (no volume code mounts)
+#   - Frontend is compiled to static files and served by nginx
+#   - Backend runs uvicorn with 2 workers, no --reload
+#   - DB and Redis ports are NOT exposed externally
+#   - Single nginx entry point on port 80
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Database ────────────────────────────────────────────────────────────────
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: mini_erp_db
+    restart: always
+    environment:
+      POSTGRES_DB:       mini_erp
+      POSTGRES_USER:     erp_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    # No external port — only reachable within Docker network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erp_user -d mini_erp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: mini_erp_redis
+    restart: always
+    # No external port — only reachable within Docker network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend API ──────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    image: mini-erp-backend:latest
+    container_name: mini_erp_backend
+    restart: always
+    env_file:
+      - ./backend/.env.prod
+    volumes:
+      - models_store:/app/models_store
+      - uploads:/app/uploads
+      - logs:/app/logs
+    # Not exposed externally — nginx proxies to it
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ── Celery Worker ────────────────────────────────────────────────────────────
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    image: mini-erp-backend:latest
+    container_name: mini_erp_celery
+    restart: always
+    command: celery -A app.celery_app worker --loglevel=warning --concurrency=1
+    env_file:
+      - ./backend/.env.prod
+    volumes:
+      - models_store:/app/models_store
+      - uploads:/app/uploads
+      - logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── Ollama (local LLM embeddings) ────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama
+    container_name: mini_erp_ollama
+    restart: always
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── Frontend + Nginx ─────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    image: mini-erp-frontend:latest
+    container_name: mini_erp_frontend
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./infrastructure/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  models_store:
+  uploads:
+  logs:
+  ollama_data:
