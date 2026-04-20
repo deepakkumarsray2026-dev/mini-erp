@@ -20,24 +20,22 @@ All notable changes to the Mini-ERP platform are documented here, organised by p
 
 ---
 
-### v3.1.0 — Finance Chat, Duplicate Invoice Detection, OCR Pipeline (2026-04-15)
+### v3.1.0 — Finance Chat, Duplicate Invoice Detection (2026-04-15)
 
 #### Added
 
 **Backend**
 - `backend/app/api/v1/llmops.py` — new FastAPI router for all Phase 3 LLM/RAG endpoints (`/api/v1/llmops/*`).
-- `backend/app/services/ai_service.py` — orchestration layer for conversation management, message routing, duplicate-invoice detection, and OCR job creation.
+- `backend/app/services/ai_service.py` — orchestration layer for conversation management, message routing, and duplicate-invoice detection.
 - `backend/app/ml/llm/chat_service.py` — Text-to-SQL engine with provider-agnostic LLM support (Anthropic / Groq / Ollama), SQL safety validation, and conversation history.
 - `backend/app/ml/llm/embedding_service.py` — pgvector-based invoice embedding and cosine-similarity duplicate detection.
-- `backend/app/ml/llm/ocr_service.py` — Invoice image OCR via Claude Vision API.
-- `backend/app/tasks/ocr_tasks.py` — Celery task for async OCR processing.
-- `backend/app/models/llmops.py` — SQLAlchemy models: `LLMConversation`, `LLMChatMessage`, `LLMDocumentJob`, `InvoiceEmbedding`.
+- `backend/app/models/llmops.py` — SQLAlchemy models: `LLMConversation`, `LLMChatMessage`, `LLMEmbedding`.
 - Alembic migrations: `a1b2c3d4e5f6_phase3_llm_tables.py`, `b2c3d4e5f6a1_phase3_embeddings_pgvector.py`.
 - New config vars: `LLM_PROVIDER`, `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `GROQ_CHAT_MODEL`, `OLLAMA_BASE_URL`, `OLLAMA_CHAT_MODEL`, `CHAT_MODEL`, `CHAT_HISTORY_LIMIT`, `MAX_SQL_ROWS`.
 
 **Frontend**
 - `frontend/src/modules/chat/pages/ChatPage.tsx` — Finance Chat UI with conversation sidebar, message bubbles, collapsible SQL query panel, and example prompts.
-- `frontend/src/services/llm.service.ts` — API client for all LLM/chat endpoints.
+- `frontend/src/services/llm.service.ts` — API client for LLM/chat and duplicate invoice endpoints.
 - `/chat` route added to `router.tsx`.
 - "AI Chat" entry added to `Sidebar.tsx`.
 

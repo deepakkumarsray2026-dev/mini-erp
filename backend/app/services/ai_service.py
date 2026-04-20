@@ -12,10 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models.llmops import (
     ConversationStatus,
-    DocumentJobStatus,
     LLMChatMessage,
     LLMConversation,
-    LLMDocumentJob,
 )
 
 
@@ -159,50 +157,3 @@ async def check_invoice_duplicate(invoice_id: str, db: AsyncSession) -> dict:
         "top_match":    top_match,
     }
 
-
-# ---------------------------------------------------------------------------
-# OCR
-# ---------------------------------------------------------------------------
-
-async def create_ocr_job(
-    file_path: str,
-    file_name: str,
-    triggered_by: str,
-    db: AsyncSession,
-) -> LLMDocumentJob:
-    """Create an OCR job record and enqueue the Celery task."""
-    from app.tasks.ocr_tasks import run_ocr_job
-
-    job = LLMDocumentJob(
-        document_type="invoice_ocr",
-        file_path=file_path,
-        file_name=file_name,
-        status=DocumentJobStatus.PENDING,
-        triggered_by=triggered_by,
-    )
-    db.add(job)
-    await db.flush()
-
-    run_ocr_job.delay(job.id)
-    logger.info(f"OCR job {job.id} enqueued for {file_name}")
-    return job
-
-
-async def get_ocr_job(job_id: str, db: AsyncSession) -> LLMDocumentJob | None:
-    result = await db.execute(
-        select(LLMDocumentJob).where(LLMDocumentJob.id == job_id)
-    )
-    return result.scalar_one_or_none()
-
-
-async def list_ocr_jobs(db: AsyncSession, page: int = 1, page_size: int = 20) -> dict:
-    offset = (page - 1) * page_size
-    result = await db.execute(
-        select(LLMDocumentJob)
-        .where(LLMDocumentJob.document_type == "invoice_ocr")
-        .order_by(LLMDocumentJob.created_at.desc())
-        .offset(offset)
-        .limit(page_size)
-    )
-    jobs = list(result.scalars().all())
-    return {"items": jobs, "page": page, "page_size": page_size}

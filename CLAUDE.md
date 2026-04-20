@@ -15,7 +15,7 @@ basic CRUD through ML, RAG/LLM, Deep Learning, and Agentic AI.
 | Week 0 | Setup & Infrastructure (GCP, GitHub, CI/CD, DB schema) | ✅ Done |
 | Phase 1 | MVP mini-ERP CRUD (Workforce, Payroll, AP, Expenses, Procurement, GL) | ✅ Built — needs VM deploy |
 | Phase 2 | Machine Learning (Attrition, Expense Violations, Payroll Anomaly, Invoice Classifier) | 🔄 Partial |
-| Phase 3 | RAG + LLM (Duplicate Invoice, Finance Chat, OCR Pipeline) | 🔄 In Progress |
+| Phase 3 | RAG + LLM (Finance Chat, Duplicate Invoice Detection) | ✅ Done |
 | Phase 4 | Deep Learning (LSTM Budget Forecaster, CNN Invoice Image Classifier) | ⏳ Pending |
 | Phase 5 | AI Agents (Invoice Agent, Expense Audit Agent, Onboarding Agent) | ⏳ Pending |
 | Phase 6 | Agentic Networks (Financial Close Network, Workforce Planning Network) | ⏳ Pending |

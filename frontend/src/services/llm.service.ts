@@ -24,21 +24,6 @@ export interface ConversationDetail extends Conversation {
   messages: Message[]
 }
 
-export interface OcrJob {
-  id: string
-  document_type: string
-  file_name: string | null
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  extracted_data: Record<string, unknown> | null
-  error_message: string | null
-  model_used: string | null
-  input_tokens: number | null
-  output_tokens: number | null
-  created_at: string
-  started_at: string | null
-  finished_at: string | null
-}
-
 export const llmService = {
   // Conversations
   createConversation: (): Promise<Conversation> =>
@@ -70,19 +55,4 @@ export const llmService = {
 
   listDuplicates: (page = 1) =>
     api.get('/llmops/invoices/duplicates', { params: { page } }).then((r) => r.data),
-
-  // OCR
-  uploadForOcr: (file: File): Promise<OcrJob> => {
-    const form = new FormData()
-    form.append('file', file)
-    return api.post('/llmops/ocr/upload', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((r) => r.data)
-  },
-
-  listOcrJobs: (page = 1): Promise<{ items: OcrJob[]; page: number; page_size: number }> =>
-    api.get('/llmops/ocr/jobs', { params: { page } }).then((r) => r.data),
-
-  getOcrJob: (jobId: string): Promise<OcrJob> =>
-    api.get(`/llmops/ocr/jobs/${jobId}`).then((r) => r.data),
 }

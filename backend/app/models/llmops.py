@@ -13,13 +13,6 @@ class ConversationStatus(str, enum.Enum):
     ARCHIVED = "archived"
 
 
-class DocumentJobStatus(str, enum.Enum):
-    PENDING    = "pending"
-    PROCESSING = "processing"
-    COMPLETED  = "completed"
-    FAILED     = "failed"
-
-
 class LLMConversation(Base):
     """A chat session between a user and the Finance Chat assistant."""
     __tablename__ = "llm_conversations"
@@ -74,23 +67,3 @@ class LLMEmbedding(Base):
     updated_at:      Mapped[datetime]   = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
-class LLMDocumentJob(Base):
-    """Tracks async OCR / document extraction jobs."""
-    __tablename__ = "llm_document_jobs"
-    __table_args__ = {"schema": "mlops"}
-
-    id:             Mapped[str]               = mapped_column(UUID(as_uuid=False), primary_key=True, server_default=func.uuid_generate_v4())
-    document_type:  Mapped[str]               = mapped_column(String(50), nullable=False)
-    document_id:    Mapped[str | None]        = mapped_column(String(100), index=True)
-    file_path:      Mapped[str | None]        = mapped_column(String(500))
-    file_name:      Mapped[str | None]        = mapped_column(String(200))
-    status:         Mapped[DocumentJobStatus] = mapped_column(String(20), default=DocumentJobStatus.PENDING)
-    extracted_data: Mapped[dict | None]       = mapped_column(JSONB)
-    error_message:  Mapped[str | None]        = mapped_column(Text)
-    model_used:     Mapped[str | None]        = mapped_column(String(100))
-    input_tokens:   Mapped[int | None]        = mapped_column(Integer)
-    output_tokens:  Mapped[int | None]        = mapped_column(Integer)
-    triggered_by:   Mapped[str | None]        = mapped_column(String(100))
-    started_at:     Mapped[datetime | None]   = mapped_column(DateTime(timezone=True))
-    finished_at:    Mapped[datetime | None]   = mapped_column(DateTime(timezone=True))
-    created_at:     Mapped[datetime]          = mapped_column(DateTime(timezone=True), server_default=func.now())

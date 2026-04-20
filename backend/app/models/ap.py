@@ -77,7 +77,6 @@ class Invoice(Base, TimestampMixin):
     category:            Mapped[str|None]       = mapped_column(String(50))
     is_duplicate:        Mapped[bool]           = mapped_column(Boolean, default=False)
     duplicate_of_id:     Mapped[str|None]       = mapped_column(UUID(as_uuid=False), ForeignKey("ap.invoices.id"))
-    ocr_extracted:       Mapped[dict|None]      = mapped_column(JSONB)
     suggested_gl_account:Mapped[str|None]       = mapped_column(String(20))
 
     vendor:  Mapped[Vendor]              = relationship("Vendor", back_populates="invoices")

@@ -14,19 +14,11 @@ Prefix: /api/v1/llmops
     POST   /embeddings/reindex              — Reindex all invoices (admin)
     POST   /invoices/{id}/duplicate-check  — Check a single invoice
     GET    /invoices/duplicates            — List flagged duplicates
-
-  OCR:
-    POST   /ocr/upload                     — Upload document, returns job_id
-    GET    /ocr/jobs                       — List OCR jobs
-    GET    /ocr/jobs/{job_id}              — Get job status + results
 """
-import os
-import shutil
-import uuid
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.permissions import ModuleName, can_read, can_run, get_current_user
-from app.models.llmops import LLMChatMessage, LLMConversation, LLMDocumentJob
+from app.models.llmops import LLMChatMessage, LLMConversation
 from app.services import ai_service
 
 router = APIRouter()
@@ -90,24 +82,6 @@ class DuplicateCheckOut(BaseModel):
     is_duplicate: bool
     similar:      list[dict]
     top_match:    dict | None
-
-
-class OcrJobOut(BaseModel):
-    id:             str
-    document_type:  str
-    file_name:      str | None
-    status:         str
-    extracted_data: Any        = None
-    error_message:  str | None = None
-    model_used:     str | None = None
-    input_tokens:   int | None = None
-    output_tokens:  int | None = None
-    created_at:     datetime
-    started_at:     datetime | None = None
-    finished_at:    datetime | None = None
-
-    class Config:
-        from_attributes = True
 
 
 # ---------------------------------------------------------------------------
@@ -257,62 +231,3 @@ async def list_duplicates(
     ]
     return {"items": items, "page": page, "page_size": page_size}
 
-
-# ---------------------------------------------------------------------------
-# OCR
-# ---------------------------------------------------------------------------
-
-_ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-
-
-@router.post("/ocr/upload", response_model=OcrJobOut, status_code=status.HTTP_202_ACCEPTED,
-             dependencies=[Depends(can_run(ModuleName.AI))])
-async def upload_for_ocr(
-    file: UploadFile = File(...),
-    current_user=Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    if not settings.ANTHROPIC_API_KEY:
-        raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY not configured")
-
-    ext = os.path.splitext(file.filename or "")[1].lower()
-    if ext not in _ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Unsupported file type '{ext}'. Allowed: {sorted(_ALLOWED_EXTENSIONS)}",
-        )
-
-    # Save to uploads directory
-    upload_dir = os.path.join(settings.UPLOAD_DIR, "ocr")
-    os.makedirs(upload_dir, exist_ok=True)
-    safe_name = f"{uuid.uuid4()}{ext}"
-    file_path  = os.path.join(upload_dir, safe_name)
-
-    with open(file_path, "wb") as out:
-        shutil.copyfileobj(file.file, out)
-
-    job = await ai_service.create_ocr_job(
-        file_path=file_path,
-        file_name=file.filename or safe_name,
-        triggered_by=current_user.id,
-        db=db,
-    )
-    return job
-
-
-@router.get("/ocr/jobs", dependencies=[Depends(can_read(ModuleName.AI))])
-async def list_ocr_jobs(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
-):
-    return await ai_service.list_ocr_jobs(db, page=page, page_size=page_size)
-
-
-@router.get("/ocr/jobs/{job_id}", response_model=OcrJobOut,
-            dependencies=[Depends(can_read(ModuleName.AI))])
-async def get_ocr_job(job_id: str, db: AsyncSession = Depends(get_db)):
-    job = await ai_service.get_ocr_job(job_id, db)
-    if not job:
-        raise HTTPException(status_code=404, detail="OCR job not found")
-    return job

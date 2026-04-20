@@ -27,7 +27,7 @@ A full-stack Enterprise Resource Planning platform built as a portfolio project 
 | **Week 0** | GCP setup, CI/CD, DB schema, RBAC | ✅ Done |
 | **Phase 1** | MVP ERP — Workforce, Payroll, AP, Expenses, Procurement, GL | ✅ Done |
 | **Phase 2** | Machine Learning — Attrition, Expense Violations, Payroll Anomaly, Invoice Classifier | ✅ Done |
-| **Phase 3** | RAG + LLM — Finance Chat (Text-to-SQL), Duplicate Invoice Detection, OCR Pipeline | 🔄 In Progress |
+| **Phase 3** | RAG + LLM — Finance Chat (Text-to-SQL), Duplicate Invoice Detection | ✅ Done |
 | **Phase 4** | Deep Learning — LSTM Budget Forecaster, CNN Invoice Image Classifier | ⏳ Pending |
 | **Phase 5** | AI Agents — Invoice Agent, Expense Audit Agent, Onboarding Agent | ⏳ Pending |
 | **Phase 6** | Agentic Networks — Financial Close Network, Workforce Planning Network | ⏳ Pending |
@@ -37,7 +37,7 @@ A full-stack Enterprise Resource Planning platform built as a portfolio project 
 
 ## Architecture
 
-### Current State — Phases 1 + 2 ✅ · Phase 3 🔄 In Progress
+### Current State — Phases 1 + 2 + 3 ✅
 
 ```mermaid
 graph TB
@@ -53,21 +53,21 @@ graph TB
         API["JWT + RBAC · /api/v1/*"]
         ERP["Phase 1 — Core ERP\nauth · workforce · payroll · ap\nexpenses · procurement · gl · admin"]
         ML["Phase 2 — Machine Learning  ✅\n/api/v1/mlops/*\nAttrition · Expense Violation\nPayroll Anomaly · Invoice Classifier"]
-        LLM["Phase 3 — RAG + LLM  🔄\n/api/v1/llmops/*\nFinance Chat (Text-to-SQL)\nDuplicate Invoice (pgvector cosine sim)\nOCR Pipeline (Claude Vision)"]
+        LLM["Phase 3 — RAG + LLM  ✅\n/api/v1/llmops/*\nFinance Chat (Text-to-SQL)\nDuplicate Invoice (pgvector cosine sim)"]
     end
 
     subgraph ST["Storage"]
-        PG["PostgreSQL 15 + pgvector\nauth · hcm · payroll · ap\nexpenses · procurement · gl\nmlops (models · metrics · predictions)\nmlops (conversations · embeddings · ocr jobs)"]
+        PG["PostgreSQL 15 + pgvector\nauth · hcm · payroll · ap\nexpenses · procurement · gl\nmlops (models · metrics · predictions)\nmlops (conversations · embeddings)"]
         RD["Redis 7\nCelery broker · result backend · cache"]
-        FS["File System\n/app/models_store — .joblib artifacts\n/app/uploads — OCR invoice images"]
+        FS["File System\n/app/models_store — .joblib artifacts"]
     end
 
     subgraph WK["Background Workers"]
-        CW["Celery Worker\nML training jobs (Phase 2)\nOCR processing (Phase 3)"]
+        CW["Celery Worker\nML training jobs (Phase 2)"]
     end
 
     subgraph LP["LLM Providers (Phase 3)"]
-        ANT["Anthropic Claude\ndefault · chat + vision"]
+        ANT["Anthropic Claude\ndefault · chat"]
         GROQ["Groq API\nOpenAI-compatible · free tier"]
         OLL["Ollama\nlocal / offline"]
     end
@@ -81,7 +81,6 @@ graph TB
     ML --> FS
     ML -->|enqueue training| RD
     LLM --> PG
-    LLM -->|OCR upload path| FS
     LLM -->|tool-calling| ANT
     LLM -.->|alt provider| GROQ
     LLM -.->|alt provider| OLL
@@ -103,7 +102,7 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph Current["Current Platform (Phases 1–3)  ✅🔄"]
+    subgraph Current["Current Platform (Phases 1–3)  ✅"]
         PLAT["Core ERP + ML Models + Finance Chat\n/api/v1/* · /api/v1/mlops/* · /api/v1/llmops/*\nPostgreSQL · pgvector · Redis · Celery"]
     end
 
@@ -180,10 +179,8 @@ mini-erp/
 │   │   │   ├── pipelines/       # Training & inference orchestration
 │   │   │   └── llm/             # Phase 3 — LLM services
 │   │   │       ├── chat_service.py      # Text-to-SQL engine
-│   │   │       ├── embedding_service.py # pgvector invoice embeddings
-│   │   │       └── ocr_service.py       # Invoice OCR via Claude Vision
+│   │   │       └── embedding_service.py # pgvector invoice embeddings
 │   │   ├── tasks/
-│   │   │   └── ocr_tasks.py     # Celery OCR task
 │   │   ├── data/                # Seed scripts
 │   │   └── core/                # Config, DB, security, logging
 │   ├── alembic/                 # DB migrations
@@ -219,7 +216,7 @@ mini-erp/
 
 - Docker & Docker Compose
 - Git
-- An LLM API key (Anthropic, Groq, or a local Ollama instance) for Phase 3 features
+- A Groq API key or local Ollama instance for Phase 3 Finance Chat / duplicate detection
 
 ### 1. Clone the repository
 
@@ -248,11 +245,11 @@ MODELS_DIR=/app/models_store
 UPLOAD_DIR=/app/uploads
 LOG_LEVEL=INFO
 
-# Phase 3 — LLM provider (choose one: anthropic | groq | ollama)
-LLM_PROVIDER=anthropic
-ANTHROPIC_API_KEY=sk-ant-...
-# GROQ_API_KEY=gsk_...
+# Phase 3 — LLM provider (choose one: groq | ollama | anthropic)
+LLM_PROVIDER=groq
+GROQ_API_KEY=gsk_...
 # OLLAMA_BASE_URL=http://host.docker.internal:11434
+# ANTHROPIC_API_KEY=sk-ant-...   # only needed if LLM_PROVIDER=anthropic
 ```
 
 ### 3. Start the stack
@@ -335,7 +332,6 @@ All LLM endpoints are under `/api/v1/llmops/`. See [docs/ai_chat.md](docs/ai_cha
 |---|---|---|
 | **Finance Chat** | `/api/v1/llmops/chat/` | Natural-language Text-to-SQL over all ERP schemas |
 | **Duplicate Invoice Detection** | `/api/v1/llmops/invoices/` | pgvector cosine-similarity embedding search |
-| **OCR Pipeline** | `/api/v1/llmops/ocr/` | Invoice image → structured data via Claude Vision |
 
 **Provider support:** Anthropic Claude (default) · Groq (OpenAI-compatible) · Ollama (local)
 
@@ -378,7 +374,7 @@ PostgreSQL with 9 schemas:
 | `procurement` | purchase_requisitions, purchase_orders, po_lines, goods_receipts |
 | `gl` | accounts, fiscal_periods, journals, journal_lines, budgets |
 | `mlops` | ml_models, ml_model_metrics, ml_prediction_logs, ml_training_jobs |
-| `mlops` (Phase 3) | llm_conversations, llm_chat_messages, llm_document_jobs, invoice_embeddings |
+| `mlops` (Phase 3) | llm_conversations, llm_chat_messages, llm_embeddings |
 
 ---
 
