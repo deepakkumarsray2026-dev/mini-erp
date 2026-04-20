@@ -37,122 +37,120 @@ A full-stack Enterprise Resource Planning platform built as a portfolio project 
 
 ## Architecture
 
-### Current State — Phase 3 (RAG + LLM)
+### Current State — Phases 1 + 2 ✅ · Phase 3 🔄 In Progress
 
 ```mermaid
 graph TB
     subgraph Client["Browser / Client"]
-        FE["React 18 + TypeScript\nVite · Tailwind CSS\nZustand · TanStack Query\n+ Finance Chat UI"]
+        FE["React 18 + TypeScript · Vite · Tailwind\nPhase 1: ERP Modules (7 domains)\nPhase 2: AI/MLOps Dashboard\nPhase 3: Finance Chat UI"]
     end
 
-    subgraph Gateway["Gateway"]
-        NG["Nginx\n(reverse proxy)"]
+    subgraph GW["Gateway"]
+        NG["Nginx · reverse proxy\n:80 → :3000 (UI) · :8000 (API)"]
     end
 
-    subgraph Backend["FastAPI Backend (Python 3.11)"]
-        API["REST API\n/api/v1/*"]
-        AUTH["JWT + RBAC\nauth.py"]
-        SVC["Business Logic\nservices/"]
-        ML["Phase 2 — ML Layer\nscikit-learn · joblib"]
-        LLM["Phase 3 — LLM Layer\nText-to-SQL · Embeddings · OCR"]
+    subgraph BE["FastAPI Backend · Python 3.11 · SQLAlchemy 2.0 async"]
+        API["JWT + RBAC · /api/v1/*"]
+        ERP["Phase 1 — Core ERP\nauth · workforce · payroll · ap\nexpenses · procurement · gl · admin"]
+        ML["Phase 2 — Machine Learning  ✅\n/api/v1/mlops/*\nAttrition · Expense Violation\nPayroll Anomaly · Invoice Classifier"]
+        LLM["Phase 3 — RAG + LLM  🔄\n/api/v1/llmops/*\nFinance Chat (Text-to-SQL)\nDuplicate Invoice (pgvector cosine sim)\nOCR Pipeline (Claude Vision)"]
     end
 
-    subgraph Storage["Storage"]
-        PG["PostgreSQL 15\n8 schemas + mlops\n+ pgvector"]
-        RD["Redis 7\ncache / queue"]
-        FS["File System\n/app/models_store\n/app/uploads"]
+    subgraph ST["Storage"]
+        PG["PostgreSQL 15 + pgvector\nauth · hcm · payroll · ap\nexpenses · procurement · gl\nmlops (models · metrics · predictions)\nmlops (conversations · embeddings · ocr jobs)"]
+        RD["Redis 7\nCelery broker · result backend · cache"]
+        FS["File System\n/app/models_store — .joblib artifacts\n/app/uploads — OCR invoice images"]
     end
 
-    subgraph Workers["Background Workers"]
-        CW["Celery Worker\nasync tasks (OCR)"]
+    subgraph WK["Background Workers"]
+        CW["Celery Worker\nML training jobs (Phase 2)\nOCR processing (Phase 3)"]
     end
 
-    subgraph LLM_API["LLM Providers"]
-        ANT["Anthropic Claude\n(default)"]
-        GROQ["Groq API\n(fallback)"]
-        OLL["Ollama\n(local / offline)"]
+    subgraph LP["LLM Providers (Phase 3)"]
+        ANT["Anthropic Claude\ndefault · chat + vision"]
+        GROQ["Groq API\nOpenAI-compatible · free tier"]
+        OLL["Ollama\nlocal / offline"]
     end
 
-    FE -->|HTTP| NG
-    NG -->|proxy :8000| API
-    NG -->|proxy :3000| FE
-    API --> AUTH
-    API --> SVC
-    API --> ML
-    API --> LLM
-    SVC --> PG
+    FE -->|HTTP/JSON| NG
+    NG -->|:8000| API
+    NG -->|:3000| FE
+    API --> ERP & ML & LLM
+    ERP --> PG
     ML --> PG
     ML --> FS
+    ML -->|enqueue training| RD
     LLM --> PG
-    LLM --> LLM_API
-    API --> RD
+    LLM -->|OCR upload path| FS
+    LLM -->|tool-calling| ANT
+    LLM -.->|alt provider| GROQ
+    LLM -.->|alt provider| OLL
     RD --> CW
     CW --> PG
+    CW --> FS
 
     style Client fill:#dbeafe,stroke:#3b82f6
-    style Backend fill:#dcfce7,stroke:#16a34a
-    style Storage fill:#fef9c3,stroke:#ca8a04
-    style Workers fill:#fce7f3,stroke:#db2777
-    style Gateway fill:#f3f4f6,stroke:#6b7280
-    style LLM_API fill:#ede9fe,stroke:#7c3aed
+    style BE fill:#dcfce7,stroke:#16a34a
+    style ST fill:#fef9c3,stroke:#ca8a04
+    style WK fill:#fce7f3,stroke:#db2777
+    style GW fill:#f3f4f6,stroke:#6b7280
+    style LP fill:#ede9fe,stroke:#7c3aed
 ```
 
-### Future State — Phase 6 (Agentic AI Platform)
+### Target State — Phase 6 (Agentic AI Platform)
+
+> Phases 1–3 (shown above) remain in place. The diagram below shows only the **new layers** added in Phases 4–6.
 
 ```mermaid
 graph TB
-    subgraph Client["Browser / Client"]
-        FE["React Frontend\n+ Chat UI\n+ Agent Console"]
+    subgraph Current["Current Platform (Phases 1–3)  ✅🔄"]
+        PLAT["Core ERP + ML Models + Finance Chat\n/api/v1/* · /api/v1/mlops/* · /api/v1/llmops/*\nPostgreSQL · pgvector · Redis · Celery"]
     end
 
-    subgraph Gateway["Gateway"]
-        NG["Nginx + Auth Middleware"]
+    subgraph P4["Phase 4 — Deep Learning  ⏳"]
+        LSTM["LSTM Budget Forecaster\ntime-series GL spend prediction"]
+        CNN["CNN Invoice Image Classifier\nscanned invoice category detection"]
     end
 
-    subgraph Backend["FastAPI Backend"]
-        API["REST API\n/api/v1/*"]
-        ML["Phase 2 — ML\nAttrition · Anomaly\nViolation · Classifier"]
-        DL["Phase 4 — Deep Learning\nLSTM Budget Forecaster\nCNN Invoice Classifier"]
-        RAG["Phase 3 — RAG + LLM\nFinance Chat · Duplicate Invoice\nOCR Pipeline"]
-        AGT["Phase 5 — AI Agents\nInvoice Agent\nExpense Audit Agent\nOnboarding Agent"]
-        NET["Phase 6 — Agentic Networks\nFinancial Close Network\nWorkforce Planning Network"]
+    subgraph P5["Phase 5 — AI Agents  ⏳"]
+        AINV["Invoice Processing Agent\nauto-match · approve · post to GL"]
+        AEXP["Expense Audit Agent\npolicy check · violation escalation"]
+        AONB["Employee Onboarding Agent\nmulti-step HR workflow automation"]
     end
 
-    subgraph Storage["Storage"]
-        PG["PostgreSQL 15"]
-        RD["Redis 7"]
-        FS["Model Store\n.joblib / .pt / .onnx"]
-        VDB["pgvector\n(invoice embeddings)"]
-        OBJ["Object Store\nInvoice images · PDFs"]
+    subgraph P6["Phase 6 — Agentic Networks  ⏳"]
+        AFIN["Financial Close Network\ncoordinated multi-agent period close"]
+        AWFP["Workforce Planning Network\nheadcount · budget · org design agents"]
     end
 
-    subgraph LLM["LLM / Embeddings"]
-        LLM_API["Anthropic Claude\n/ Groq / Ollama"]
+    subgraph NewStorage["Additional Storage (Phase 4+)"]
+        MS["Model Store additions\n.pt (PyTorch) · .onnx (export)"]
+        VS["Vector Store expansion\nRAG over documents · policies"]
     end
 
-    subgraph Workers["Workers"]
-        CW["Celery\nasync tasks"]
-        LG["LangGraph\nagent runtime"]
+    subgraph AgentRuntime["Agent Runtime (Phase 5+)"]
+        LG["LangGraph\norchestration · state machines"]
+        LLM_A["Anthropic Claude\ntool-calling · multi-step reasoning"]
     end
 
-    FE --> NG --> API
-    API --> ML & DL & RAG & AGT & NET
-    ML & DL --> FS
-    RAG --> VDB & OBJ & LLM_API
-    AGT --> LG & LLM_API
-    NET --> LG & LLM_API
-    API --> RD --> CW
-    CW & LG --> PG
+    PLAT --> LSTM & CNN
+    PLAT --> AINV & AEXP & AONB
+    PLAT --> AFIN & AWFP
+    LSTM & CNN --> MS
+    AINV & AEXP & AONB --> LG
+    AFIN & AWFP --> LG
+    LG --> LLM_A
+    LG --> VS
 
-    style Client fill:#dbeafe,stroke:#3b82f6
-    style Backend fill:#dcfce7,stroke:#16a34a
-    style Storage fill:#fef9c3,stroke:#ca8a04
-    style Workers fill:#fce7f3,stroke:#db2777
-    style LLM fill:#ede9fe,stroke:#7c3aed
-    style Gateway fill:#f3f4f6,stroke:#6b7280
+    style Current fill:#dcfce7,stroke:#16a34a
+    style P4 fill:#eff6ff,stroke:#3b82f6
+    style P5 fill:#faf5ff,stroke:#7c3aed
+    style P6 fill:#fdf4ff,stroke:#a855f7
+    style NewStorage fill:#fef9c3,stroke:#ca8a04
+    style AgentRuntime fill:#ede9fe,stroke:#7c3aed
 ```
 
-> **Note:** Both diagrams are updated as each phase is completed.
+> The target state diagram is updated at each phase completion.
 
 ---
 
