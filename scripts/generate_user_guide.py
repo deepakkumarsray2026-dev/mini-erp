@@ -457,10 +457,10 @@ def getting_started():
     creds_data = [
         [Paragraph("<b>Role</b>", S["small"]),
          Paragraph("<b>Credentials</b>", S["small"])],
-        ["Platform Administrator", "platform_admin / Admin@123!"],
-        ["HR Administrator", "hr_admin / Admin@123!"],
-        ["Finance Administrator", "finance_admin / Admin@123!"],
-        ["Module-specific users", "workforce_user1, payroll_user1, etc. / User@123!"],
+        ["Platform Administrator", "platform_admin / (contact your admin)"],
+        ["HR Administrator", "hr_admin / (contact your admin)"],
+        ["Finance Administrator", "finance_admin / (contact your admin)"],
+        ["Module-specific users", "workforce_user1, payroll_user1, etc. / (contact your admin)"],
     ]
     creds_table = info_table(creds_data, col_widths=[55 * mm, None])
 
@@ -533,7 +533,7 @@ def page_login():
             "Each user's access is governed by their assigned role",
             "Contact your Platform Admin if you are locked out",
         ],
-        tip="Use platform_admin / Admin@123! for full admin access in the demo environment.",
+        tip="Use platform_admin / (contact your admin) for full admin access in the demo environment.",
     )
 
 

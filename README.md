@@ -239,8 +239,8 @@ Edit `backend/.env.dev`:
 ```env
 APP_ENV=development
 SECRET_KEY=your-secret-key-here
-DATABASE_URL=postgresql+asyncpg://erp_user:changeme@db:5432/mini_erp
-DATABASE_URL_SYNC=postgresql://erp_user:changeme@db:5432/mini_erp
+DATABASE_URL=postgresql+asyncpg://erp_user:<db-password>@db:5432/mini_erp
+DATABASE_URL_SYNC=postgresql://erp_user:<db-password>@db:5432/mini_erp
 REDIS_URL=redis://redis:6379/0
 CELERY_BROKER_URL=redis://redis:6379/1
 CELERY_RESULT_BACKEND=redis://redis:6379/2
@@ -284,12 +284,14 @@ docker compose -f docker-compose.dev.yml exec -T -e PYTHONPATH=/app backend pyth
 
 **Default credentials:**
 
-| Username | Password | Role |
-|---|---|---|
-| `platform_admin` | `Admin@123!` | Platform Admin (full access) |
-| `hr_admin` | `Admin@123!` | HR Admin |
-| `finance_admin` | `Admin@123!` | Finance Admin |
-| `workforce_user1` | `User@123!` | Workforce read/write |
+| Username | Role |
+|---|---|
+| `platform_admin` | Platform Admin (full access) |
+| `hr_admin` | HR Admin |
+| `finance_admin` | Finance Admin |
+| `workforce_user1` | Workforce read/write |
+
+> Seed passwords are set in `backend/app/data/seed_all.py`. Contact the Platform Administrator for access in deployed environments.
 
 ---
 

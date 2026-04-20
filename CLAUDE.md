@@ -75,7 +75,7 @@ mini-erp/
 
 **Connection (dev):**
 ```
-postgresql://erp_user:changeme@localhost:5432/mini_erp
+postgresql://erp_user:<db-password>@localhost:5432/mini_erp
 ```
 Inside Docker: host is `db` not `localhost`.
 
@@ -138,8 +138,8 @@ All endpoints are under `/api/v1/`:
 ```env
 APP_ENV=development
 SECRET_KEY=<generate a strong key>
-DATABASE_URL=postgresql+asyncpg://erp_user:changeme@db:5432/mini_erp
-DATABASE_URL_SYNC=postgresql://erp_user:changeme@db:5432/mini_erp
+DATABASE_URL=postgresql+asyncpg://erp_user:<db-password>@db:5432/mini_erp
+DATABASE_URL_SYNC=postgresql://erp_user:<db-password>@db:5432/mini_erp
 REDIS_URL=redis://redis:6379/0
 CELERY_BROKER_URL=redis://redis:6379/1
 CELERY_RESULT_BACKEND=redis://redis:6379/2
