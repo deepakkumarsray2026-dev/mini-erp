@@ -2,7 +2,7 @@
 
 A full-stack Enterprise Resource Planning platform built as a portfolio project demonstrating progressive AI/ML integration — from basic CRUD through Machine Learning, RAG/LLM, Deep Learning, and Agentic AI.
 
-**Live Demo:** `http://34.13.57.203:3000` &nbsp;|&nbsp; **API Docs:** `http://34.13.57.203:8000/docs`
+**Run locally** — see [Getting Started](#getting-started) &nbsp;|&nbsp; **GitHub:** https://github.com/deepakkumarsray2026-dev/mini-erp
 
 ---
 
